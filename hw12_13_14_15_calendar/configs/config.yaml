@@ -1,0 +1,8 @@
+version "3.9"
+
+config:
+  logger:
+    level:
+      - "info"
+  storage:
+    - "sql"
