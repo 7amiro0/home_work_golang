@@ -1,20 +1,62 @@
 package main
 
-// При желании конфигурацию можно вынести в internal/config.
-// Организация конфига в main принуждает нас сужать API компонентов, использовать
-// при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
+import (
+	"fmt"
+	"os"
+
+	"gopkg.in/yaml.v3"
+)
+
 type Config struct {
-	Logger LoggerConf
-	// TODO
+	HTTP    HTTPConfig   `yaml:"http"`
+	Logger  LoggerConfig `yaml:"logger"`
+	Storage string       `yaml:"storage"`
+	DBInfo  DBConfig     `yaml:"dbInfo"`
 }
 
-type LoggerConf struct {
-	Level string
-	// TODO
+type HTTPConfig struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
 }
 
-func NewConfig() Config {
-	return Config{}
+type DBConfig struct {
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	Name     string `yaml:"name"`
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
 }
 
-// TODO
+type LoggerConfig struct {
+	Level string `yaml:"level"`
+}
+
+func NewConfig(path string) (config Config) {
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
+	err = yaml.Unmarshal(bytes, &config)
+	if err != nil {
+		panic(err)
+	}
+
+	config.DBInfo.SetEnv()
+
+	return config
+}
+
+func (db *DBConfig) SetEnv() {
+	if err := os.Setenv("DATABASE_USER", db.User); err != nil {
+		fmt.Println(err)
+	} else if err := os.Setenv("DATABASE_PORT", db.Port); err != nil {
+		fmt.Println(err)
+	} else if err := os.Setenv("DATABASE_HOST", db.Host); err != nil {
+		fmt.Println(err)
+	} else if err := os.Setenv("DATABASE_PASSWORD", db.Password); err != nil {
+		fmt.Println(err)
+	} else if err := os.Setenv("DATABASE_NAME", db.Name); err != nil {
+		fmt.Println(err)
+	}
+}

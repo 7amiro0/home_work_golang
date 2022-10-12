@@ -1,5 +1,12 @@
 package main
 
+import (
+	"bufio"
+	"io/ioutil"
+	"os"
+	"strings"
+)
+
 type Environment map[string]EnvValue
 
 // EnvValue helps to distinguish between empty files and files with the first empty line.
@@ -8,9 +15,50 @@ type EnvValue struct {
 	NeedRemove bool
 }
 
-// ReadDir reads a specified directory and returns map of env variables.
-// Variables represented as files where filename is name of variable, file first line is a value.
+func getFirstString(file *os.File) string {
+	fileScanner := bufio.NewScanner(file)
+	fileScanner.Split(bufio.ScanLines)
+
+	fileScanner.Scan()
+	firstLine := fileScanner.Text()
+
+	editedLine := strings.TrimRight(firstLine, " 	")
+	editedLine = strings.ReplaceAll(editedLine, "\x00", "\n")
+
+	return editedLine
+}
+
 func ReadDir(dir string) (Environment, error) {
-	// Place your code here
-	return nil, nil
+	allFiles, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make(Environment)
+	for _, file := range allFiles {
+		if file.IsDir() || strings.Contains(file.Name(), "=") {
+			continue
+		}
+
+		openFile, err := os.Open(dir + string(os.PathSeparator) + file.Name())
+		if err != nil {
+			return nil, err
+		}
+
+		needRemove := false
+
+		firstLine := getFirstString(openFile)
+		if file.Size() == 0 {
+			needRemove = true
+		}
+
+		data[file.Name()] = EnvValue{firstLine, needRemove}
+
+		err = openFile.Close()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return data, nil
 }

@@ -1,45 +1,89 @@
 package hw02unpackstring
 
 import (
-	"errors"
-	"testing"
-
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func TestUnpack(t *testing.T) {
-	tests := []struct {
-		input    string
+	testTable := []struct {
+		str      string
 		expected string
+		err      error
 	}{
-		{input: "a4bc2d5e", expected: "aaaabccddddde"},
-		{input: "abccd", expected: "abccd"},
-		{input: "", expected: ""},
-		{input: "aaa0b", expected: "aab"},
-		// uncomment if task with asterisk completed
-		// {input: `qwe\4\5`, expected: `qwe45`},
-		// {input: `qwe\45`, expected: `qwe44444`},
-		// {input: `qwe\\5`, expected: `qwe\\\\\`},
-		// {input: `qwe\\\3`, expected: `qwe\3`},
+		{
+			str:      "hel2o2",
+			expected: "helloo",
+			err:      nil,
+		},
+		{
+			str:      `hel\2o`,
+			expected: `hel2o`,
+			err:      nil,
+		},
+		{
+			str:      `sla\\2sh`,
+			expected: `sla\\sh`,
+			err:      nil,
+		},
+		{
+			str:      `hel\2o`,
+			expected: `hel2o`,
+			err:      nil,
+		},
+		{
+			str:      `45`,
+			expected: ``,
+			err:      ErrInvalidString,
+		},
+		{
+			str:      `a45`,
+			expected: ``,
+			err:      ErrInvalidString,
+		},
+		//{
+		//	str:      `asdf\`,
+		//	expected: ``,
+		//	err:      ErrInvalidString,
+		//},
+		{
+			str:      `hel\\\2o`,
+			expected: `hel\2o`,
+			err:      nil,
+		},
+		{
+			str:      `hel1o`,
+			expected: `helo`,
+			err:      nil,
+		},
+		{
+			str:      ``,
+			expected: ``,
+			err:      nil,
+		},
+		{
+			str:      "gap here ->\n5.",
+			expected: "gap here ->\n\n\n\n\n.",
+			err:      nil,
+		},
+		{
+			str:      `qw\er`,
+			expected: ``,
+			err:      ErrInvalidString,
+		},
+		{
+			str:      `qw\43er`,
+			expected: `qw444er`,
+			err:      ErrInvalidString,
+		},
 	}
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.input, func(t *testing.T) {
-			result, err := Unpack(tc.input)
-			require.NoError(t, err)
-			require.Equal(t, tc.expected, result)
-		})
-	}
-}
+	for _, testCase := range testTable {
+		t.Run("start test", func(t *testing.T) {
+			realResult, _ := Unpack(testCase.str)
 
-func TestUnpackInvalidString(t *testing.T) {
-	invalidStrings := []string{"3abc", "45", "aaa10b"}
-	for _, tc := range invalidStrings {
-		tc := tc
-		t.Run(tc, func(t *testing.T) {
-			_, err := Unpack(tc)
-			require.Truef(t, errors.Is(err, ErrInvalidString), "actual error %q", err)
+			require.Equal(t, testCase.expected, realResult)
+
 		})
 	}
 }

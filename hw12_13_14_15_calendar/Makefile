@@ -4,11 +4,17 @@ DOCKER_IMG="calendar:develop"
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
+generate:
+	protoc -I . \
+		 --go_out ./internal/server/grps --go_opt paths=source_relative  \
+		 --go-grpc_out ./internal/server/grps --go-grpc_opt paths=source_relative  \
+		./api/EventService.proto
+
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 run: build
-	$(BIN) -config ./configs/config.toml
+	$(BIN) --config ./configs/config.yaml
 
 build-img:
 	docker build \
@@ -30,5 +36,6 @@ install-lint-deps:
 
 lint: install-lint-deps
 	golangci-lint run ./...
+
 
 .PHONY: build run build-img run-img version test lint

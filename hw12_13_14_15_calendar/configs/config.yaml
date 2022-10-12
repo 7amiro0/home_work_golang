@@ -1,8 +1,18 @@
-version "3.9"
+version: '3.9'
 
-config:
-  logger:
-    level:
-      - "info"
-  storage:
-    - "sql"
+logger:
+  level: "info"
+
+storage: "sql"
+#storage: "memory"
+
+http:
+  host: "localhost"
+  port: "8080"
+
+dbInfo:
+  user: "postgres"
+  password: "test"
+  name: "test"
+  host: "localhost"
+  port: "5432"

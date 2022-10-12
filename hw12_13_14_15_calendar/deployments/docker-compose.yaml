@@ -1,0 +1,31 @@
+version: '3.9'
+
+services:
+  app:
+    restart: always
+    build:
+      dockerfile: ./build/Dockerfile
+      context: ./../
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+    environment:
+      - USER=test
+      - PASSWORD=test
+      - NAME=events
+      - HOST=db
+      - PORT=5432
+
+  db:
+    restart: always
+    image: postgres:latest
+    volumes:
+      - ./.database/postgres/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=events
+    ports:
+      - "5432"
+

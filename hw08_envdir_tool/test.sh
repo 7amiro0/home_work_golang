@@ -14,12 +14,12 @@ expected='HELLO is ("hello")
 BAR is (bar)
 FOO is (   foo
 with new line)
-UNSET is ()
+UNSET is (_)
 ADDED is (from original env)
 EMPTY is ()
 arguments are arg1=1 arg2=2'
 
-[ "${result}" = "${expected}" ] || (echo -e "invalid output: ${result}" && exit 1)
+[ "${result}" = "${expected}" ] || (echo -e "invalid output: \"${result}\"" && exit 1)
 
 rm -f go-envdir
 echo "PASS"

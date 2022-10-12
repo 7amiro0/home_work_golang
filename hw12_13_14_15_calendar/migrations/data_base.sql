@@ -1,18 +1,22 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE events
+create table if not exists users
 (
-    ID serial primary key,
-    Title text,
-    IDUser int,
-    Description text,
-    StartEvent timestamp,
-    EndEvent timestamp
+    ID serial primary key
 );
--- +goose StatementEnd
 
+create table if not exists events
+    (
+        ID serial primary key,
+        UserID int not null,
+        Title varchar(20) not null,
+        Description text not null,
+        EndEvent timestamp not null,
+        StartEvent timestamp not null
+);
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE events;
+drop table events;
+drop table users;
 -- +goose StatementEnd

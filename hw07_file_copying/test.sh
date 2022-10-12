@@ -21,5 +21,11 @@ cmp out.txt testdata/out_offset100_limit1000.txt
 ./go-cp -from testdata/input.txt -to out.txt -offset 6000 -limit 1000
 cmp out.txt testdata/out_offset6000_limit1000.txt
 
+./go-cp -from testdata/input.txt -to out.txt -offset 100
+cmp out.txt testdata/out_offset100_limit0.txt
+
+#./go-cp -from testdata/bigFile.txt -to out.txt
+#cmp out.txt testdata/bigFile.txt
+
 rm -f go-cp out.txt
 echo "PASS"

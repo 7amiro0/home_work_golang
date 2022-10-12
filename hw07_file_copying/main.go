@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 )
 
 var (
@@ -18,5 +19,11 @@ func init() {
 
 func main() {
 	flag.Parse()
-	// Place your code here.
+	if from == "" || to == "" {
+		fmt.Errorf("Error: \"from\" and \"to\" are mandatory")
+	}
+	err := Copy(from, to, offset, limit)
+	if err != nil {
+		fmt.Errorf("Error while copying: %v", err)
+	}
 }
