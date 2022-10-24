@@ -40,6 +40,10 @@ func New(level string) *Logger {
 	}
 }
 
+func (l Logger) Fatal(msg ...any) {
+	l.logger.Fatal(msg...)
+}
+
 func (l Logger) Info(msg ...any) {
 	l.logger.Info(msg...)
 }

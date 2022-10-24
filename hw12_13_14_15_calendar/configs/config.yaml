@@ -6,6 +6,10 @@ logger:
 storage: "sql"
 #storage: "memory"
 
+grpc:
+  host: "localhost"
+  port: "8000"
+
 http:
   host: "localhost"
   port: "8080"

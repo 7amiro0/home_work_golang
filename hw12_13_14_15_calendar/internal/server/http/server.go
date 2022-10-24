@@ -2,62 +2,66 @@ package internalhttp
 
 import (
 	"context"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	pb "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/grps/api"
-	grpcGetwey "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/server"
+	"github.com/julienschmidt/httprouter"
 	"net/http"
-
-	"net"
 )
 
-type Server struct {
-	host, port string
-	ctx        context.Context
-	app        Application
-	muxServer  *grpcGetwey.ServeMux
-	listener   net.Listener
+type HTTPServer struct {
+	server     *server.Server
 	httpServer *http.Server
-	pb.UnimplementedStorageServer
 }
 
-type Logger interface {
-	app.Logger
-}
-
-type Application interface {
-	app.Storage
-}
-
-var l Logger
-
-func NewServer(ctx context.Context, logger Logger, app Application, host, port string) *Server {
-	l = logger
-	server := grpcGetwey.NewServeMux()
-
-	return &Server{
-		host: host,
-		port: port,
-		ctx:  ctx,
-		app:  app,
-		muxServer: server,
+func NewHTTPServer(ctx context.Context, log server.Logger, app server.Application, addr string) *HTTPServer {
+	server := &HTTPServer{
+		server: server.New(ctx, log, app, addr),
 	}
+
+	server.httpServer = &http.Server{
+		Addr:    server.server.Addr,
+		Handler: server.server.Middle.LoggingMiddleware(server.createRouter(), server.server.Logger),
+	}
+
+	return server
 }
 
-func (s *Server) Start(ctx context.Context) error {
-	err := s.app.Connect(ctx)
-	if err != nil {
+func (s *HTTPServer) Start(ctx context.Context) error {
+	if err := s.server.App.Connect(ctx); err != nil {
 		return err
 	}
 
-	router := s.getRouter()
-	s.muxServer.
-	return nil
+	return s.httpServer.ListenAndServe()
 }
 
-func (s *Server) Stop(ctx context.Context) error {
-	if err := s.app.Close(ctx); err != nil {
+func (s *HTTPServer) Stop(ctx context.Context) error {
+	if err := s.server.App.Close(ctx); err != nil {
 		return err
 	}
-	//return s.httpServer.Shutdown(ctx)
-	return s.listener.Close()
+
+	return s.httpServer.Shutdown(ctx)
+}
+
+func (s *HTTPServer) createRouter() *httprouter.Router {
+	router := httprouter.New()
+	router.HandlerFunc("GET", "/list", s.list)
+	router.HandlerFunc("GET", "/add", s.add)
+	router.HandlerFunc("GET", "/update", s.update)
+	router.HandlerFunc("GET", "/delete", s.delete)
+	return router
+}
+
+func (s *HTTPServer) add(w http.ResponseWriter, r *http.Request) {
+	s.server.Add(w, r)
+}
+
+func (s *HTTPServer) delete(w http.ResponseWriter, r *http.Request) {
+	s.server.Delete(w, r)
+}
+
+func (s *HTTPServer) update(w http.ResponseWriter, r *http.Request) {
+	s.server.Update(w, r)
+}
+
+func (s *HTTPServer) list(w http.ResponseWriter, r *http.Request) {
+	s.server.List(w, r)
 }

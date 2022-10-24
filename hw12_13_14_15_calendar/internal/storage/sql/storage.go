@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage"
+	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -48,17 +48,15 @@ func (db DBInfo) getLink() string {
 		db.name,
 	)
 
-	fmt.Println(info)
 	return info
 }
 
 func (s *Storage) Add(ctx context.Context, event storage.Event) (err error) {
 	row := s.db.QueryRow(ctx, dbInsert, event.UserID, event.Title, event.Description, event.End, event.Start)
-
 	return row.Scan(&event.ID)
 }
 
-func (s *Storage) List(ctx context.Context, idUser int) (result []storage.Event) {
+func (s *Storage) List(ctx context.Context, idUser int64) (result []storage.Event) {
 	rows, err := s.db.Query(ctx, dbSelect, idUser)
 	if err != nil {
 		fmt.Println(err)
@@ -79,11 +77,10 @@ func (s *Storage) List(ctx context.Context, idUser int) (result []storage.Event)
 
 func (s *Storage) Update(ctx context.Context, event storage.Event) (err error) {
 	_, err = s.db.Exec(ctx, dbUpdate, event.Title, event.Description, event.Start, event.End, event.ID)
-
 	return err
 }
 
-func (s *Storage) Delete(ctx context.Context, id int) (err error) {
+func (s *Storage) Delete(ctx context.Context, id int64) (err error) {
 	_, err = s.db.Exec(ctx, dbDelete, id)
 	return err
 }

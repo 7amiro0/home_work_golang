@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package storage;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "/storage";
+
+service Storage {
+  rpc Add(Event) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      get: "/add/{userID}/{title}/{description}/{start}/{end}"
+    };
+  };
+
+  rpc Delete(Event) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      get: "/delete/{id}"
+    };
+  };
+
+  rpc Update(Event) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      get: "/update/{id}/{userID}/{title}/{description}/{start}/{end}"
+    };
+  };
+
+  rpc List(Event) returns (Events) {
+    option (google.api.http) = {
+      get: "/list/{userID}"
+    };
+  };
+}
+
+message Events {
+  repeated Event events = 1;
+}
+
+message Event {
+  int64 id = 1;
+  string title = 2;
+  int64 userID = 3;
+  string description = 4;
+  google.protobuf.Timestamp start = 5;
+  google.protobuf.Timestamp end = 6;
+}

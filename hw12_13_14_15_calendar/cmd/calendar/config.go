@@ -8,13 +8,19 @@ import (
 )
 
 type Config struct {
+	DBInfo  DBConfig     `yaml:"dbInfo"`
 	HTTP    HTTPConfig   `yaml:"http"`
+	GRPC    GRPCConfig   `yaml:"grpc"`
 	Logger  LoggerConfig `yaml:"logger"`
 	Storage string       `yaml:"storage"`
-	DBInfo  DBConfig     `yaml:"dbInfo"`
 }
 
 type HTTPConfig struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
+}
+
+type GRPCConfig struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
 }

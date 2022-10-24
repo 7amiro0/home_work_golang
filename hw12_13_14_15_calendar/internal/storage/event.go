@@ -3,9 +3,9 @@ package storage
 import "time"
 
 type Event struct {
-	ID          int
+	ID          int64
 	Title       string
-	UserID      int
+	UserID      int64
 	Description string
 	End         time.Time
 	Start       time.Time

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	event "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage"
+	event "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
 	"github.com/stretchr/testify/require"
 )
 

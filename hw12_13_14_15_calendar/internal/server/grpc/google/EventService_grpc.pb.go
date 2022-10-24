@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.7
-// source: api/EventService.proto
+// source: google/EventService.proto
 
-package events
+package storage
 
 import (
 	context "context"
@@ -24,9 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StorageClient interface {
 	Add(ctx context.Context, in *Event, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	Delete(ctx context.Context, in *ID, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Delete(ctx context.Context, in *Event, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Update(ctx context.Context, in *Event, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	List(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Events, error)
+	List(ctx context.Context, in *Event, opts ...grpc.CallOption) (*Events, error)
 }
 
 type storageClient struct {
@@ -39,16 +39,16 @@ func NewStorageClient(cc grpc.ClientConnInterface) StorageClient {
 
 func (c *storageClient) Add(ctx context.Context, in *Event, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/event.Storage/Add", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/storage.Storage/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *storageClient) Delete(ctx context.Context, in *ID, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *storageClient) Delete(ctx context.Context, in *Event, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/event.Storage/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/storage.Storage/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,16 +57,16 @@ func (c *storageClient) Delete(ctx context.Context, in *ID, opts ...grpc.CallOpt
 
 func (c *storageClient) Update(ctx context.Context, in *Event, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/event.Storage/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/storage.Storage/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *storageClient) List(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Events, error) {
+func (c *storageClient) List(ctx context.Context, in *Event, opts ...grpc.CallOption) (*Events, error) {
 	out := new(Events)
-	err := c.cc.Invoke(ctx, "/event.Storage/List", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/storage.Storage/List", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -78,9 +78,9 @@ func (c *storageClient) List(ctx context.Context, in *emptypb.Empty, opts ...grp
 // for forward compatibility
 type StorageServer interface {
 	Add(context.Context, *Event) (*emptypb.Empty, error)
-	Delete(context.Context, *ID) (*emptypb.Empty, error)
+	Delete(context.Context, *Event) (*emptypb.Empty, error)
 	Update(context.Context, *Event) (*emptypb.Empty, error)
-	List(context.Context, *emptypb.Empty) (*Events, error)
+	List(context.Context, *Event) (*Events, error)
 	mustEmbedUnimplementedStorageServer()
 }
 
@@ -91,13 +91,13 @@ type UnimplementedStorageServer struct {
 func (UnimplementedStorageServer) Add(context.Context, *Event) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
-func (UnimplementedStorageServer) Delete(context.Context, *ID) (*emptypb.Empty, error) {
+func (UnimplementedStorageServer) Delete(context.Context, *Event) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedStorageServer) Update(context.Context, *Event) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
-func (UnimplementedStorageServer) List(context.Context, *emptypb.Empty) (*Events, error) {
+func (UnimplementedStorageServer) List(context.Context, *Event) (*Events, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
 func (UnimplementedStorageServer) mustEmbedUnimplementedStorageServer() {}
@@ -123,7 +123,7 @@ func _Storage_Add_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/event.Storage/Add",
+		FullMethod: "/storage.Storage/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StorageServer).Add(ctx, req.(*Event))
@@ -132,7 +132,7 @@ func _Storage_Add_Handler(srv interface{}, ctx context.Context, dec func(interfa
 }
 
 func _Storage_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ID)
+	in := new(Event)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -141,10 +141,10 @@ func _Storage_Delete_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/event.Storage/Delete",
+		FullMethod: "/storage.Storage/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).Delete(ctx, req.(*ID))
+		return srv.(StorageServer).Delete(ctx, req.(*Event))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -159,7 +159,7 @@ func _Storage_Update_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/event.Storage/Update",
+		FullMethod: "/storage.Storage/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StorageServer).Update(ctx, req.(*Event))
@@ -168,7 +168,7 @@ func _Storage_Update_Handler(srv interface{}, ctx context.Context, dec func(inte
 }
 
 func _Storage_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(Event)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -177,10 +177,10 @@ func _Storage_List_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/event.Storage/List",
+		FullMethod: "/storage.Storage/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StorageServer).List(ctx, req.(*emptypb.Empty))
+		return srv.(StorageServer).List(ctx, req.(*Event))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -189,7 +189,7 @@ func _Storage_List_Handler(srv interface{}, ctx context.Context, dec func(interf
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Storage_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "event.Storage",
+	ServiceName: "storage.Storage",
 	HandlerType: (*StorageServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -210,5 +210,5 @@ var Storage_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/EventService.proto",
+	Metadata: "google/EventService.proto",
 }

@@ -1,4 +1,4 @@
-package internalhttp
+package server
 
 import (
 	"fmt"
@@ -14,21 +14,23 @@ func createLog(ip, method, path, version, answer, browser string, latency time.D
 		path, version, answer, latency, browser)
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
+func (middle) LoggingMiddleware(next http.Handler, logger Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-
 		next.ServeHTTP(w, r)
 
-		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
+		if err != nil {
+			logger.Fatal(err)
+		}
+
 		date := time.Now()
 		method := r.Method
 		path := r.URL.Path
 		version := r.Proto
 		answer := "200"
 		browser := strings.Split(r.UserAgent(), " ")[0]
-
 		latency := time.Since(start)
-		l.Info(createLog(ip, method, path, version, answer, browser, latency, date))
+		logger.Info(createLog(ip, method, path, version, answer, browser, latency, date))
 	})
 }
