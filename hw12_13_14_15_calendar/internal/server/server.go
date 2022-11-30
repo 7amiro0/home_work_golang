@@ -6,12 +6,17 @@ import (
 	"net/http"
 )
 
+var (
+	ErrEndBeforeStart = "end \"%v\" before start \"%v\""
+)
+
 type Logger interface {
 	app.Logger
 }
 
 type Application interface {
-	app.Storage
+	app.BaseStorage
+	app.ConnCloser
 }
 
 type middle struct{}
@@ -23,7 +28,7 @@ type middleware interface {
 type Server struct {
 	App    Application
 	Logger Logger
-	ctx    context.Context
+	Ctx    context.Context
 	Middle middleware
 	Addr   string
 }
@@ -31,7 +36,7 @@ type Server struct {
 func New(ctx context.Context, logger Logger, app Application, addr string) *Server {
 	return &Server{
 		Addr:   addr,
-		ctx:    ctx,
+		Ctx:    ctx,
 		Logger: logger,
 		App:    app,
 		Middle: middle{},

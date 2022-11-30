@@ -15,37 +15,34 @@ import (
 func TestStorage(t *testing.T) {
 	t.Run("Add and listing event", func(t *testing.T) {
 		storage := New()
-		errTime := time.Now()
+		startEvent := time.Now()
+		endEvent := startEvent.Add(5 * time.Minute)
 
-		expectedResult := []event.Event{}
+		expectedResult := make([]event.Event, 0, 10)
 		var testEvent event.Event
+
 		for i := 1; i <= 10; i++ {
-			if i == 5 {
-				testEvent = event.Event{
-					ID:          i,
-					Title:       "test",
-					UserID:      234,
-					Description: "test data",
-					End:         errTime,
-					Start:       errTime,
-				}
-			} else {
-				testEvent = event.Event{
-					ID:          i,
-					Title:       "test",
-					UserID:      234,
-					Description: "test data",
-					End:         time.Now(),
-					Start:       time.Now(),
-				}
+			testEvent = event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      int32(i),
+				Description: "test data",
+				Start:       startEvent,
+				End:         endEvent,
 			}
 
 			expectedResult = append(expectedResult, testEvent)
 			err := storage.Add(context.Background(), testEvent)
-			require.Nilf(t, err, "error: expected nil, but get %q", err)
+			require.Nilf(t, err, "Error: expected nil, but get %q", err)
 		}
 
-		realResult := storage.List(context.Background(), 234)
+		realResult, err := storage.List(context.Background(), "user")
+		require.Nilf(t, err, "Error: expected nil, but get %q", err)
+
 		sort.Slice(realResult, func(i, j int) bool {
 			return realResult[i].ID < realResult[j].ID
 		})
@@ -56,133 +53,430 @@ func TestStorage(t *testing.T) {
 	t.Run("Delete event", func(t *testing.T) {
 		storage := New()
 
-		expectedFullResult := []event.Event{}
+		startEvent := time.Now()
+		endEvent := startEvent.Add(5 * time.Minute)
+
+		expectedFullResult := make([]event.Event, 0, 10)
+		var testEvent event.Event
+
 		for i := 1; i <= 10; i++ {
-			testEvent := event.Event{
-				ID:          i,
-				Title:       "test",
-				UserID:      234,
+			testEvent = event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      int32(i),
 				Description: "test data",
-				End:         time.Now(),
-				Start:       time.Now(),
+				Start:       startEvent,
+				End:         endEvent,
 			}
 
 			expectedFullResult = append(expectedFullResult, testEvent)
-			err := storage.Add(context.Background(), testEvent)
-			require.Nilf(t, err, "error: expected nil, but get %q", err)
+			_ = storage.Add(context.Background(), testEvent)
 		}
 
 		expectedResult := append(expectedFullResult[:3], expectedFullResult[6:]...)
 
-		_ = storage.Delete(context.Background(), 4)
+		err := storage.Delete(context.Background(), 4)
+		require.Nilf(t, err, "Error: expected nil, but get %q", err)
 		_ = storage.Delete(context.Background(), 5)
 		_ = storage.Delete(context.Background(), 6)
 
-		realResult := storage.List(context.Background(), 234)
+		realResult, err := storage.List(context.Background(), "user")
 		sort.Slice(realResult, func(i, j int) bool {
 			return realResult[j].ID > realResult[i].ID
 		})
 
 		require.Equal(t, expectedResult, realResult)
 
-		err := storage.Delete(context.Background(), 4)
+		err = storage.Delete(context.Background(), 4)
 
 		require.Equal(t, fmt.Errorf(ErrNotExistID.Error(), 4), err)
 	})
 
 	t.Run("Update event", func(t *testing.T) {
 		storage := New()
+		startEvent := time.Now()
+		endEvent := startEvent.Add(5 * time.Minute)
+		expectedResult := make([]event.Event, 0, 10)
+
+		var testEvent event.Event
+
 		newEvent := event.Event{
-			ID:          7,
-			Title:       "update data",
-			UserID:      234,
+			ID:    7,
+			Title: "update data",
+			User: event.User{
+				Name: "user",
+				ID:   1,
+			},
 			Description: "update",
-			End:         time.Now(),
-			Start:       time.Now(),
+			Start:       startEvent,
+			End:         endEvent,
 		}
 
-		expectedResult := []event.Event{}
 		for i := 1; i <= 10; i++ {
-			testEvent := event.Event{
-				ID:          i,
-				Title:       "test",
-				UserID:      234,
+			testEvent = event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      int32(i),
 				Description: "test data",
-				End:         time.Now(),
-				Start:       time.Now(),
+				Start:       startEvent,
+				End:         endEvent,
 			}
 
 			expectedResult = append(expectedResult, testEvent)
-			err := storage.Add(context.Background(), testEvent)
-			require.Nilf(t, err, "error: expected nil, but get %q", err)
+			_ = storage.Add(context.Background(), testEvent)
 		}
-
-		realOldResult := storage.List(context.Background(), 234)
-		sort.Slice(realOldResult, func(i, j int) bool {
-			return realOldResult[j].ID > realOldResult[i].ID
-		})
-		require.Equal(t, expectedResult, realOldResult)
 
 		expectedResult[6] = newEvent
 		sort.Slice(expectedResult, func(i, j int) bool {
 			return expectedResult[j].ID > expectedResult[i].ID
 		})
-		_ = storage.Update(context.Background(), newEvent)
 
-		realNewResult := storage.List(context.Background(), 234)
-		sort.Slice(realNewResult, func(i, j int) bool {
-			return realNewResult[j].ID > realNewResult[i].ID
+		err := storage.Update(context.Background(), newEvent)
+		require.Nilf(t, err, "Error: expected nil, but get %q", err)
+
+		realResult, err := storage.List(context.Background(), "user")
+		sort.Slice(realResult, func(i, j int) bool {
+			return realResult[j].ID > realResult[i].ID
 		})
 	})
 
-	t.Run("data race test", func(t *testing.T) {
+	t.Run("list by notify", func(t *testing.T) {
 		storage := New()
-		expectedAddResult := []event.Event{}
-		wg := &sync.WaitGroup{}
-		wg.Add(50)
 
-		for i := 0; i < 50; i++ {
-			eventTest := event.Event{
-				ID:          i,
-				Title:       "event",
-				UserID:      234,
-				Description: "test event",
-				End:         time.Now(),
-				Start:       time.Now(),
+		var testEvent event.Event
+		var expectedResult []event.Event
+
+		for i := 1; i <= 10; i++ {
+			testEvent = event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      1,
+				Description: "test data",
+				Start:       time.Now().Add(time.Minute),
+				End:         time.Now().Add(time.Minute),
 			}
 
-			expectedAddResult = append(expectedAddResult, eventTest)
+			expectedResult = append(expectedResult, testEvent)
+			_ = storage.Add(context.Background(), testEvent)
+		}
+
+		realResult, err := storage.ListByNotify(context.Background(), 10)
+		require.Nilf(t, err, "Error: expected nil, but get %q", err)
+		sort.Slice(realResult, func(i, j int) bool {
+			return realResult[j].ID > realResult[i].ID
+		})
+
+		require.Equal(t, expectedResult, realResult)
+	})
+
+	t.Run("clear old events", func(t *testing.T) {
+		storage := New()
+
+		var testEvent event.Event
+		expectedResult := make([]event.Event, 0, 0)
+
+		startEvent, _ := time.Parse(time.RFC3339Nano, time.UnixDate)
+		endEvent := startEvent.Add(1 * time.Minute)
+
+		for i := 1; i <= 10; i++ {
+			testEvent = event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      1,
+				Description: "test data",
+				Start:       startEvent,
+				End:         endEvent,
+			}
+
+			_ = storage.Add(context.Background(), testEvent)
+		}
+
+		err := storage.Clear(context.Background())
+		require.Nilf(t, err, "Error: expected nil, but get %q", err)
+
+		realResult, _ := storage.List(context.Background(), "user")
+		sort.Slice(realResult, func(i, j int) bool {
+			return realResult[j].ID > realResult[i].ID
+		})
+
+		require.Equal(t, expectedResult, realResult)
+	})
+
+	t.Run("data race add", func(t *testing.T) {
+		storage := New()
+		wg := &sync.WaitGroup{}
+
+		startEvent := time.Now()
+		endEvent := startEvent.Add(5 * time.Minute)
+
+		expectedResult := make([]event.Event, 0, 50)
+		var testEvent event.Event
+
+		for i := 1; i <= 50; i++ {
+			wg.Add(1)
+			testEvent = event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      int32(i),
+				Description: "test data",
+				Start:       startEvent,
+				End:         endEvent,
+			}
+
+			expectedResult = append(expectedResult, testEvent)
 
 			go func(eventTest event.Event, wg *sync.WaitGroup) {
 				err := storage.Add(context.Background(), eventTest)
-				require.Nilf(t, err, "error: expected nil, but get %q", err)
+				require.Nilf(t, err, "Error: expected nil, but get %q", err)
 				wg.Done()
-			}(eventTest, wg)
+			}(testEvent, wg)
 		}
 		wg.Wait()
 
-		realAddResult := storage.List(context.Background(), 234)
-		sort.Slice(realAddResult, func(i, j int) bool {
-			return realAddResult[j].ID > realAddResult[i].ID
+		realResult, err := storage.List(context.Background(), "user")
+		require.Nilf(t, err, "Error: expected nil, but get %q", err)
+		sort.Slice(realResult, func(i, j int) bool {
+			return realResult[j].ID > realResult[i].ID
 		})
-		require.Equal(t, expectedAddResult, realAddResult)
+		require.Equal(t, expectedResult, realResult)
+	})
 
-		wg.Add(25)
-		expectedDeleteResult := expectedAddResult[25:]
+	t.Run("data race delete", func(t *testing.T) {
+		storage := New()
+		wg := &sync.WaitGroup{}
 
-		for i := 0; i < 25; i++ {
-			go func(id int, wg *sync.WaitGroup) {
+		startEvent := time.Now()
+		endEvent := startEvent.Add(5 * time.Minute)
+
+		expectedResult := make([]event.Event, 0, 50)
+		var testEvent event.Event
+
+		for i := 1; i <= 50; i++ {
+			testEvent = event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      int32(i),
+				Description: "test data",
+				Start:       startEvent,
+				End:         endEvent,
+			}
+
+			expectedResult = append(expectedResult, testEvent)
+			_ = storage.Add(context.Background(), testEvent)
+		}
+
+		expectedResult = expectedResult[25:]
+
+		for i := 1; i <= 25; i++ {
+			wg.Add(1)
+			go func(id int64, wg *sync.WaitGroup) {
 				err := storage.Delete(context.Background(), id)
-				require.Nilf(t, err, "error: expected nil, but get %q", err)
+				require.Nilf(t, err, "Error: expected nil, but get %q", err)
 				wg.Done()
-			}(i, wg)
+			}(int64(i), wg)
 		}
 		wg.Wait()
 
-		realDeleteResult := storage.List(context.Background(), 234)
-		sort.Slice(realDeleteResult, func(i, j int) bool {
-			return realDeleteResult[j].ID > realDeleteResult[i].ID
+		realResult, _ := storage.List(context.Background(), "user")
+		sort.Slice(realResult, func(i, j int) bool {
+			return realResult[j].ID > realResult[i].ID
 		})
-		require.Equal(t, expectedDeleteResult, realDeleteResult)
+		require.Equal(t, expectedResult, realResult)
+	})
+
+	t.Run("data race list", func(t *testing.T) {
+		storage := New()
+		wg := &sync.WaitGroup{}
+
+		startEvent := time.Now()
+		endEvent := startEvent.Add(5 * time.Minute)
+
+		expectedResult := make([]event.Event, 0, 50)
+		var testEvent event.Event
+
+		for i := 1; i <= 50; i++ {
+			testEvent = event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      int32(i),
+				Description: "test data",
+				Start:       startEvent,
+				End:         endEvent,
+			}
+
+			expectedResult = append(expectedResult, testEvent)
+			_ = storage.Add(context.Background(), testEvent)
+		}
+
+		for i := 1; i <= 50; i++ {
+			wg.Add(1)
+			go func(id int64, wg *sync.WaitGroup) {
+				result, err := storage.List(context.Background(), "user")
+				require.Nilf(t, err, "Error: expected nil, but get %q", err)
+				sort.Slice(result, func(i, j int) bool {
+					return result[j].ID > result[i].ID
+				})
+
+				require.Equal(t, expectedResult, result)
+
+				wg.Done()
+			}(int64(i), wg)
+		}
+
+		wg.Wait()
+	})
+
+	t.Run("data race update", func(t *testing.T) {
+		storage := New()
+		wg := &sync.WaitGroup{}
+
+		startEvent := time.Now()
+		endEvent := startEvent.Add(5 * time.Minute)
+
+		expectedResult := make([]event.Event, 0, 50)
+
+		for i := 1; i <= 50; i++ {
+			testEvent := event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      int32(i),
+				Description: "test data",
+				Start:       startEvent,
+				End:         endEvent,
+			}
+
+			expectedResult = append(expectedResult, testEvent)
+			_ = storage.Add(context.Background(), testEvent)
+		}
+
+		for i := 1; i <= 50; i++ {
+			wg.Add(1)
+			go func(id int64, wg *sync.WaitGroup) {
+				testEvent := event.Event{
+					ID:    id,
+					Title: "test",
+					User: event.User{
+						Name: "user",
+						ID:   id,
+					},
+					Notify:      int32(id),
+					Description: "test data",
+					Start:       startEvent,
+					End:         endEvent,
+				}
+
+				_ = storage.Update(context.Background(), testEvent)
+
+				wg.Done()
+			}(int64(i), wg)
+		}
+
+		wg.Wait()
+
+		result, err := storage.List(context.Background(), "user")
+		require.Nilf(t, err, "Error: expected nil, but get %q", err)
+		sort.Slice(result, func(i, j int) bool {
+			return result[j].ID > result[i].ID
+		})
+		require.Equal(t, expectedResult, result)
+
+		for i := 1; i <= 50; i++ {
+			wg.Add(1)
+			go func(id int64, wg *sync.WaitGroup) {
+				testEvent := event.Event{
+					ID:    1,
+					Title: "update test",
+					User: event.User{
+						Name: "user",
+						ID:   id,
+					},
+					Notify:      5,
+					Description: "test data",
+					Start:       startEvent,
+					End:         endEvent,
+				}
+
+				err := storage.Update(context.Background(), testEvent)
+				require.Nilf(t, err, "Error: expected nil, but get %q", err)
+				wg.Done()
+			}(int64(i), wg)
+		}
+
+		wg.Wait()
+	})
+
+	t.Run("list by notify data race", func(t *testing.T) {
+		storage := New()
+		wg := &sync.WaitGroup{}
+
+		expectedResult := make([]event.Event, 0, 50)
+		var testEvent event.Event
+
+		for i := 1; i <= 50; i++ {
+			testEvent = event.Event{
+				ID:    int64(i),
+				Title: "test",
+				User: event.User{
+					Name: "user",
+					ID:   int64(i),
+				},
+				Notify:      1,
+				Description: "test data",
+				Start:       time.Now().Add(time.Minute),
+				End:         time.Now().Add(time.Minute),
+			}
+
+			expectedResult = append(expectedResult, testEvent)
+			_ = storage.Add(context.Background(), testEvent)
+		}
+
+		for i := 1; i <= 50; i++ {
+			wg.Add(1)
+			go func(id int64, wg *sync.WaitGroup) {
+				result, err := storage.ListByNotify(context.Background(), 10)
+				require.Nilf(t, err, "Error: expected nil, but get %q", err)
+				sort.Slice(result, func(i, j int) bool {
+					return result[j].ID > result[i].ID
+				})
+
+				require.Equal(t, expectedResult, result)
+
+				wg.Done()
+			}(int64(i), wg)
+		}
+
+		wg.Wait()
 	})
 }

@@ -27,6 +27,7 @@ func NewHTTPServer(ctx context.Context, log server.Logger, app server.Applicatio
 
 func (s *HTTPServer) Start(ctx context.Context) error {
 	if err := s.server.App.Connect(ctx); err != nil {
+		s.server.Logger.Error("[ERR] App don`t connect: ", err)
 		return err
 	}
 
@@ -35,6 +36,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 
 func (s *HTTPServer) Stop(ctx context.Context) error {
 	if err := s.server.App.Close(ctx); err != nil {
+		s.server.Logger.Error("[ERR] App don`t close: ", err)
 		return err
 	}
 
@@ -48,20 +50,4 @@ func (s *HTTPServer) createRouter() *httprouter.Router {
 	router.HandlerFunc("GET", "/update", s.update)
 	router.HandlerFunc("GET", "/delete", s.delete)
 	return router
-}
-
-func (s *HTTPServer) add(w http.ResponseWriter, r *http.Request) {
-	s.server.Add(w, r)
-}
-
-func (s *HTTPServer) delete(w http.ResponseWriter, r *http.Request) {
-	s.server.Delete(w, r)
-}
-
-func (s *HTTPServer) update(w http.ResponseWriter, r *http.Request) {
-	s.server.Update(w, r)
-}
-
-func (s *HTTPServer) list(w http.ResponseWriter, r *http.Request) {
-	s.server.List(w, r)
 }

@@ -32,7 +32,7 @@ var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
 var (
-	filter_Storage_Add_0 = &utilities.DoubleArray{Encoding: map[string]int{"userID": 0, "title": 1, "description": 2, "start": 3, "end": 4}, Base: []int{1, 1, 2, 3, 4, 5, 0, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6}}
+	filter_Storage_Add_0 = &utilities.DoubleArray{Encoding: map[string]int{"user": 0, "name": 1, "title": 2, "description": 3, "notify": 4, "start": 5, "end": 6}, Base: []int{1, 1, 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 2, 1, 1, 1, 1, 1, 3, 4, 5, 6, 7, 8}}
 )
 
 func request_Storage_Add_0(ctx context.Context, marshaler runtime.Marshaler, client StorageClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -46,14 +46,14 @@ func request_Storage_Add_0(ctx context.Context, marshaler runtime.Marshaler, cli
 		_   = err
 	)
 
-	val, ok = pathParams["userID"]
+	val, ok = pathParams["user.name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userID")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user.name")
 	}
 
-	protoReq.UserID, err = runtime.Int64(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "user.name", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userID", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "user.name", err)
 	}
 
 	val, ok = pathParams["title"]
@@ -74,6 +74,16 @@ func request_Storage_Add_0(ctx context.Context, marshaler runtime.Marshaler, cli
 	protoReq.Description, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "description", err)
+	}
+
+	val, ok = pathParams["notify"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "notify")
+	}
+
+	protoReq.Notify, err = runtime.Int32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "notify", err)
 	}
 
 	val, ok = pathParams["start"]
@@ -119,14 +129,14 @@ func local_request_Storage_Add_0(ctx context.Context, marshaler runtime.Marshale
 		_   = err
 	)
 
-	val, ok = pathParams["userID"]
+	val, ok = pathParams["user.name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userID")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user.name")
 	}
 
-	protoReq.UserID, err = runtime.Int64(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "user.name", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userID", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "user.name", err)
 	}
 
 	val, ok = pathParams["title"]
@@ -147,6 +157,16 @@ func local_request_Storage_Add_0(ctx context.Context, marshaler runtime.Marshale
 	protoReq.Description, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "description", err)
+	}
+
+	val, ok = pathParams["notify"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "notify")
+	}
+
+	protoReq.Notify, err = runtime.Int32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "notify", err)
 	}
 
 	val, ok = pathParams["start"]
@@ -251,6 +271,10 @@ func local_request_Storage_Delete_0(ctx context.Context, marshaler runtime.Marsh
 
 }
 
+var (
+	filter_Storage_Update_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0, "title": 1, "description": 2, "notify": 3, "start": 4, "end": 5}, Base: []int{1, 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7}}
+)
+
 func request_Storage_Update_0(ctx context.Context, marshaler runtime.Marshaler, client StorageClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq Event
 	var metadata runtime.ServerMetadata
@@ -270,16 +294,6 @@ func request_Storage_Update_0(ctx context.Context, marshaler runtime.Marshaler, 
 	protoReq.Id, err = runtime.Int64(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
-	}
-
-	val, ok = pathParams["userID"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userID")
-	}
-
-	protoReq.UserID, err = runtime.Int64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userID", err)
 	}
 
 	val, ok = pathParams["title"]
@@ -302,6 +316,16 @@ func request_Storage_Update_0(ctx context.Context, marshaler runtime.Marshaler, 
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "description", err)
 	}
 
+	val, ok = pathParams["notify"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "notify")
+	}
+
+	protoReq.Notify, err = runtime.Int32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "notify", err)
+	}
+
 	val, ok = pathParams["start"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "start")
@@ -320,6 +344,13 @@ func request_Storage_Update_0(ctx context.Context, marshaler runtime.Marshaler, 
 	protoReq.End, err = runtime.Timestamp(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "end", err)
+	}
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Storage_Update_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.Update(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -348,16 +379,6 @@ func local_request_Storage_Update_0(ctx context.Context, marshaler runtime.Marsh
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
 	}
 
-	val, ok = pathParams["userID"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userID")
-	}
-
-	protoReq.UserID, err = runtime.Int64(val)
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userID", err)
-	}
-
 	val, ok = pathParams["title"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "title")
@@ -376,6 +397,16 @@ func local_request_Storage_Update_0(ctx context.Context, marshaler runtime.Marsh
 	protoReq.Description, err = runtime.String(val)
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "description", err)
+	}
+
+	val, ok = pathParams["notify"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "notify")
+	}
+
+	protoReq.Notify, err = runtime.Int32(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "notify", err)
 	}
 
 	val, ok = pathParams["start"]
@@ -398,13 +429,20 @@ func local_request_Storage_Update_0(ctx context.Context, marshaler runtime.Marsh
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "end", err)
 	}
 
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Storage_Update_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	msg, err := server.Update(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
 var (
-	filter_Storage_List_0 = &utilities.DoubleArray{Encoding: map[string]int{"userID": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_Storage_List_0 = &utilities.DoubleArray{Encoding: map[string]int{"user": 0, "name": 1}, Base: []int{1, 1, 1, 0}, Check: []int{0, 1, 2, 3}}
 )
 
 func request_Storage_List_0(ctx context.Context, marshaler runtime.Marshaler, client StorageClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -418,14 +456,14 @@ func request_Storage_List_0(ctx context.Context, marshaler runtime.Marshaler, cl
 		_   = err
 	)
 
-	val, ok = pathParams["userID"]
+	val, ok = pathParams["user.name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userID")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user.name")
 	}
 
-	protoReq.UserID, err = runtime.Int64(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "user.name", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userID", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "user.name", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -451,14 +489,14 @@ func local_request_Storage_List_0(ctx context.Context, marshaler runtime.Marshal
 		_   = err
 	)
 
-	val, ok = pathParams["userID"]
+	val, ok = pathParams["user.name"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "userID")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "user.name")
 	}
 
-	protoReq.UserID, err = runtime.Int64(val)
+	err = runtime.PopulateFieldFromPath(&protoReq, "user.name", val)
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "userID", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "user.name", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
@@ -487,7 +525,7 @@ func RegisterStorageHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/storage.Storage/Add", runtime.WithHTTPPathPattern("/add/{userID}/{title}/{description}/{start}/{end}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/storage.Storage/Add", runtime.WithHTTPPathPattern("/add/{user.name}/{title}/{description}/{notify}/{start}/{end}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -537,7 +575,7 @@ func RegisterStorageHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/storage.Storage/Update", runtime.WithHTTPPathPattern("/update/{id}/{userID}/{title}/{description}/{start}/{end}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/storage.Storage/Update", runtime.WithHTTPPathPattern("/update/{id}/{title}/{description}/{notify}/{start}/{end}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -562,7 +600,7 @@ func RegisterStorageHandlerServer(ctx context.Context, mux *runtime.ServeMux, se
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/storage.Storage/List", runtime.WithHTTPPathPattern("/list/{userID}"))
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/storage.Storage/List", runtime.WithHTTPPathPattern("/list/{user.name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -626,7 +664,7 @@ func RegisterStorageHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/storage.Storage/Add", runtime.WithHTTPPathPattern("/add/{userID}/{title}/{description}/{start}/{end}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/storage.Storage/Add", runtime.WithHTTPPathPattern("/add/{user.name}/{title}/{description}/{notify}/{start}/{end}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -670,7 +708,7 @@ func RegisterStorageHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/storage.Storage/Update", runtime.WithHTTPPathPattern("/update/{id}/{userID}/{title}/{description}/{start}/{end}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/storage.Storage/Update", runtime.WithHTTPPathPattern("/update/{id}/{title}/{description}/{notify}/{start}/{end}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -692,7 +730,7 @@ func RegisterStorageHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
 		var annotatedContext context.Context
-		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/storage.Storage/List", runtime.WithHTTPPathPattern("/list/{userID}"))
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/storage.Storage/List", runtime.WithHTTPPathPattern("/list/{user.name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -712,13 +750,13 @@ func RegisterStorageHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 }
 
 var (
-	pattern_Storage_Add_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"add", "userID", "title", "description", "start", "end"}, ""))
+	pattern_Storage_Add_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"add", "user.name", "title", "description", "notify", "start", "end"}, ""))
 
 	pattern_Storage_Delete_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"delete", "id"}, ""))
 
-	pattern_Storage_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"update", "id", "userID", "title", "description", "start", "end"}, ""))
+	pattern_Storage_Update_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"update", "id", "title", "description", "notify", "start", "end"}, ""))
 
-	pattern_Storage_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"list", "userID"}, ""))
+	pattern_Storage_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"list", "user.name"}, ""))
 )
 
 var (

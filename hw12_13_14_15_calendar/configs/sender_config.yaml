@@ -1,0 +1,13 @@
+version: '3.9'
+
+#This is a test config
+optQueue:
+  url: "amqp://guest:guest@localhost:5672/"
+  name: "events"
+  autoAck: false
+  exclusive: false
+  noLocal: false
+  noWait: false
+
+logger:
+  level: "info"

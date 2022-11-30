@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	internalgrpc "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/server/http"
 	"net"
@@ -18,12 +17,6 @@ import (
 	storageSql "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
-var configFile string
-
-func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.yaml", "Path to configuration file")
-}
-
 func main() {
 	flag.Parse()
 
@@ -32,19 +25,19 @@ func main() {
 		return
 	}
 
-	config := NewConfig(configFile)
+	config := NewConfig()
 	logg := logger.New(config.Logger.Level)
 
 	var storage app.Storage
 	switch config.Storage {
 	case "sql":
-		storage = storageSql.New()
+		storage = storageSql.New(logg)
 	case "memory":
 		storage = storageMemory.New()
 	}
 
 	calendar := app.New(logg, storage)
-	fmt.Println("NEW APP CREATED")
+	logg.Info("[INFO] New app created")
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -56,34 +49,34 @@ func main() {
 		logg.Fatal(err)
 	}
 
-	fmt.Println("CREATED NEW SERVER")
+	logg.Info("[INFO] Created new servers")
 
 	go func() {
 		<-ctx.Done()
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancel = context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if err := httpServer.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+		if err = httpServer.Stop(ctx); err != nil {
+			logg.Error("[ERR] Failed to stop http server: " + err.Error())
 		}
-		if err := grpcServer.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+		if err = grpcServer.Stop(ctx); err != nil {
+			logg.Error("[ERR] Failed to stop http server: " + err.Error())
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	logg.Info("[INFO] Calendar is running")
 
 	go func() {
-		if err := httpServer.Start(ctx); err != nil {
-			logg.Error("failed to start grpc server: " + err.Error())
+		if err = httpServer.Start(ctx); err != nil {
+			logg.Error("[ERR] Failed to start http server: " + err.Error())
 			cancel()
 			os.Exit(1)
 		}
 	}()
 
-	if err := grpcServer.Start(ctx); err != nil {
-		logg.Error("failed to start grpc server: " + err.Error())
+	if err = grpcServer.Start(ctx); err != nil {
+		logg.Error("[ERR] Failed to start grpc server: " + err.Error())
 		cancel()
 		os.Exit(1)
 	}

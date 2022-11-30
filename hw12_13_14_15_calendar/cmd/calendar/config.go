@@ -1,18 +1,16 @@
 package main
 
 import (
-	"fmt"
+	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/cmd"
 	"os"
-
-	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	DBInfo  DBConfig     `yaml:"dbInfo"`
-	HTTP    HTTPConfig   `yaml:"http"`
-	GRPC    GRPCConfig   `yaml:"grpc"`
-	Logger  LoggerConfig `yaml:"logger"`
-	Storage string       `yaml:"storage"`
+	DBInfo  cmd.DBConfig     `yaml:"dbInfo"`
+	HTTP    HTTPConfig       `yaml:"http"`
+	GRPC    GRPCConfig       `yaml:"grpc"`
+	Logger  cmd.LoggerConfig `yaml:"logger"`
+	Storage string           `yaml:"storage"`
 }
 
 type HTTPConfig struct {
@@ -20,49 +18,26 @@ type HTTPConfig struct {
 	Port string `yaml:"port"`
 }
 
+func (h *HTTPConfig) Set() {
+	h.Host = os.Getenv("HTTP_HOST")
+	h.Port = os.Getenv("HTTP_PORT")
+}
+
 type GRPCConfig struct {
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
 }
 
-type DBConfig struct {
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Name     string `yaml:"name"`
-	Host     string `yaml:"host"`
-	Port     string `yaml:"port"`
+func (c *GRPCConfig) Set() {
+	c.Host = os.Getenv("GRPC_HOST")
+	c.Port = os.Getenv("GRPC_PORT")
 }
 
-type LoggerConfig struct {
-	Level string `yaml:"level"`
-}
-
-func NewConfig(path string) (config Config) {
-	bytes, err := os.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-
-	err = yaml.Unmarshal(bytes, &config)
-	if err != nil {
-		panic(err)
-	}
-
-	config.DBInfo.SetEnv()
+func NewConfig() (config Config) {
+	config.HTTP.Set()
+	config.GRPC.Set()
+	config.Logger.Set()
+	config.Storage = os.Getenv("STORAGE")
 
 	return config
-}
-
-func (db *DBConfig) SetEnv() {
-	if err := os.Setenv("DATABASE_USER", db.User); err != nil {
-		fmt.Println(err)
-	} else if err := os.Setenv("DATABASE_PORT", db.Port); err != nil {
-		fmt.Println(err)
-	} else if err := os.Setenv("DATABASE_HOST", db.Host); err != nil {
-		fmt.Println(err)
-	} else if err := os.Setenv("DATABASE_PASSWORD", db.Password); err != nil {
-		fmt.Println(err)
-	} else if err := os.Setenv("DATABASE_NAME", db.Name); err != nil {
-		fmt.Println(err)
-	}
 }

@@ -2,6 +2,7 @@ package internalgrpc
 
 import (
 	"context"
+	"fmt"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/server"
 	pb "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/server/grpc/google"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
@@ -10,7 +11,6 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"net/http"
-	"time"
 )
 
 type GRPCServer struct {
@@ -44,6 +44,7 @@ func NewGRPCServer(ctx context.Context, log server.Logger, app server.Applicatio
 
 func (s *GRPCServer) Start(ctx context.Context) error {
 	if err := s.server.App.Connect(ctx); err != nil {
+		s.server.Logger.Error("[ERR] App don`t connect: ", err)
 		return err
 	}
 
@@ -51,74 +52,74 @@ func (s *GRPCServer) Start(ctx context.Context) error {
 }
 
 func (s *GRPCServer) Stop(ctx context.Context) error {
-	if err := s.server.App.Close(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return s.server.App.Close(ctx)
 }
 
-func (s *GRPCServer) Add(ctx context.Context, googleEvent *pb.Event) (*emptypb.Empty, error) {
-	//start, err := time.ParseInLocation(server.TimeFormat, googleEvent.GetStart().AsTime().String(), time.UTC)
-	//if err != nil {
-	//	s.server.Logger.Error(err)
-	//	return nil, err
-	//}
-	//
-	//end, err := time.ParseInLocation(server.TimeFormat, googleEvent.GetEnd().AsTime().String(), time.UTC)
-	//if err != nil {
-	//	s.server.Logger.Error(err)
-	//	return nil, err
-	//}
+func (s *GRPCServer) Add(ctx context.Context, pbEvent *pb.Event) (*emptypb.Empty, error) {
+	start := pbEvent.GetStart().AsTime()
+	end := pbEvent.GetEnd().AsTime()
 
-	event := storage.Event{
-		Title:       googleEvent.GetTitle(),
-		UserID:      googleEvent.GetUserID(),
-		Description: googleEvent.GetDescription(),
-		End:         googleEvent.GetEnd().AsTime(),
-		Start:       googleEvent.GetStart().AsTime(),
-	}
-
-	return nil, s.server.App.Add(ctx, event)
-}
-
-func (s *GRPCServer) Delete(ctx context.Context, googleEvent *pb.Event) (*emptypb.Empty, error) {
-	return nil, s.server.App.Delete(ctx, googleEvent.GetId())
-}
-
-func (s *GRPCServer) Update(ctx context.Context, googleEvent *pb.Event) (*emptypb.Empty, error) {
-	start, err := time.ParseInLocation(server.TimeFormat, googleEvent.GetStart().AsTime().String(), time.UTC)
-	if err != nil {
-		s.server.Logger.Error(err)
-		return nil, err
-	}
-
-	end, err := time.ParseInLocation(server.TimeFormat, googleEvent.GetEnd().AsTime().String(), time.UTC)
-	if err != nil {
-		s.server.Logger.Error(err)
-		return nil, err
+	if !start.Before(end) {
+		return nil, fmt.Errorf(server.ErrEndBeforeStart, end, start)
 	}
 
 	event := storage.Event{
-		Title:       googleEvent.GetTitle(),
-		UserID:      googleEvent.GetUserID(),
-		Description: googleEvent.GetDescription(),
+		Title: pbEvent.GetTitle(),
+		User: storage.User{
+			Name: pbEvent.GetUser().GetName(),
+			ID:   pbEvent.GetUser().GetId(),
+		},
+		Description: pbEvent.GetDescription(),
+		Notify:      pbEvent.GetNotify(),
 		End:         end,
 		Start:       start,
 	}
 
-	return nil, s.server.App.Update(ctx, event)
+	return nil, s.server.App.Add(ctx, &event)
 }
 
-func (s *GRPCServer) List(ctx context.Context, googleEvent *pb.Event) (*pb.Events, error) {
+func (s *GRPCServer) Delete(ctx context.Context, pbEvent *pb.Event) (*emptypb.Empty, error) {
+	return nil, s.server.App.Delete(ctx, pbEvent.GetId())
+}
+
+func (s *GRPCServer) Update(ctx context.Context, pbEvent *pb.Event) (*emptypb.Empty, error) {
+	start := pbEvent.GetStart().AsTime()
+	end := pbEvent.GetEnd().AsTime()
+
+	if !start.Before(end) {
+		return nil, fmt.Errorf(server.ErrEndBeforeStart, end, start)
+	}
+
+	event := storage.Event{
+		ID:          pbEvent.GetId(),
+		Title:       pbEvent.GetTitle(),
+		Description: pbEvent.GetDescription(),
+		Notify:      pbEvent.GetNotify(),
+		End:         end,
+		Start:       start,
+	}
+
+	return nil, s.server.App.Update(ctx, &event)
+}
+
+func (s *GRPCServer) List(ctx context.Context, pbEvent *pb.Event) (*pb.Events, error) {
 	var list pb.Events
-	events := s.server.App.List(ctx, googleEvent.GetUserID())
+	events, err := s.server.App.List(ctx, pbEvent.GetUser().GetName())
+	if err != nil {
+		s.server.Logger.Error("[ERR] While list storage: ", err)
+		return nil, err
+	}
+
 	for _, event := range events {
 		even := &pb.Event{
-			Id:          event.ID,
-			Title:       event.Title,
-			UserID:      event.UserID,
+			Id:    event.ID,
+			Title: event.Title,
+			User: &pb.User{
+				Name: event.User.Name,
+				Id:   event.User.ID,
+			},
 			Description: event.Description,
+			Notify:      event.Notify,
 			End:         timestamppb.New(event.End),
 			Start:       timestamppb.New(event.Start),
 		}

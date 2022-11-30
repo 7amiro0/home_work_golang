@@ -1,31 +1,119 @@
 version: '3.9'
 
 services:
-  app:
-    restart: always
+  calendar:
+    container_name: "calendar"
+    restart: on-failure
     build:
-      dockerfile: ./build/Dockerfile
-      context: ./../
+      context: ..
+      dockerfile: ./build/Dockerfile_calendar
     ports:
-      - "80:80"
+      - "8080:8080"
+      - "8000:8000"
     depends_on:
-      - db
+      - migrate
     environment:
-      - USER=test
-      - PASSWORD=test
-      - NAME=events
-      - HOST=db
-      - PORT=5432
+      # logger
+      - LEVEL=${LOGGER_LEVEL}
+
+      # grpc
+      - GRPC_HOST=${GRPC_HOST}
+      - GRPC_PORT=${GRPC_PORT}
+
+      # http
+      - HTTP_HOST=${HTTP_HOST}
+      - HTTP_PORT=${HTTP_PORT}
+
+      # storage
+      - STORAGE=${TYPE_STORAGE}
+
+      # sql
+      - USER=${DB_USER}
+      - PASSWORD=${DB_PASSWORD}
+      - NAME=${DB_NAME}
+      - HOST=${DB_HOST}
+      - PORT=${DB_PORT}
+
+  scheduler:
+    container_name: "scheduler"
+    restart: on-failure
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile_scheduler
+    depends_on:
+      - rabbit
+      - migrate
+    environment:
+      # logger
+      - LEVEL=${LOGGER_LEVEL}
+
+      # rabbit
+      - URL=${URL}
+      - NAME_Q=${NAME_Q}
+      - NO_WAIT=${NO_WAIT}
+      - DURABLE=${DURABLE}
+      - EXCLUSIVE=${EXCLUSIVE}
+      - AUTO_DELETE=${AUTO_DELETE}
+      - EXCHANGE=${EXCHANGE}
+      - MANDATORY=${MANDATORY}
+      - IMMEDIATE=${IMMEDIATE}
+
+      # sql
+      - USER=${DB_USER}
+      - PASSWORD=${DB_PASSWORD}
+      - NAME=${DB_NAME}
+      - HOST=${DB_HOST}
+      - PORT=${DB_PORT}
+
+
+  sender:
+    container_name: "sender"
+    restart: on-failure
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile_sender
+    depends_on:
+      - rabbit
+    environment:
+      - URL=${URL}
+      - NAME_Q=${NAME_Q}
+      - AUTO_ACK=${AUTO_ACK}
+      - EXCLUSIVE=${EXCLUSIVE_CONSUMER}
+      - NO_LOCAL=${NO_LOCAL}
+      - NO_WAIT=${NO_WAIT_CONSUMER}
 
   db:
-    restart: always
-    image: postgres:latest
-    volumes:
-      - ./.database/postgres/data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=test
-      - POSTGRES_PASSWORD=test
-      - POSTGRES_DB=events
+    container_name: "db"
+    image: postgres:15.1-alpine
+#    volumes:
+#      - ../.database/postgres/data:/var/lib/postgresql/data
     ports:
-      - "5432"
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - DATABASE_HOST=${DB_HOST}
+      - DATABASE_PORT=${DB_PORT}
+
+  migrate:
+    container_name: "migrate"
+    restart: on-failure
+    image: migrate/migrate
+#    volumes:
+#      - ./migrations/postgres:/migrations
+    command: [/opt/migrate/goose, postgres, "host=${DB_HOST} password=${DB_PASSWORD} port=${DB_PORT} user=${DB_USER} dbname=${DB_NAME} sslmode=disable", up]
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile_migrate
+    depends_on:
+      - db
+
+  rabbit:
+    restart: on-failure
+    container_name: "rabbit"
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
 

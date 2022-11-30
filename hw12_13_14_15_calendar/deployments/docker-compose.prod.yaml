@@ -1,0 +1,10 @@
+version: '3.9'
+
+services:
+  db:
+    volumes:
+      - ./.database/postgres/data:/var/lib/postgresql/data
+
+  migrate:
+    volumes:
+      - ./migrations/postgres:/migrations

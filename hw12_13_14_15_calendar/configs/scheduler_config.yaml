@@ -1,0 +1,25 @@
+version: '3.9'
+
+#This is a test config
+optQueue:
+  url: "amqp://guest:guest@localhost:5672/"
+  name: "events"
+  noWait: false
+  durable: false
+  exclusive: false
+  autoDelete: false
+
+optAdd:
+  exchange: ""
+  mandatory: false
+  immediate: false
+
+logger:
+  level: "info"
+
+dbInfo:
+  user: "postgres"
+  password: "test"
+  name: "test"
+  host: "localhost"
+  port: "5432"
