@@ -36,7 +36,7 @@ func TestStorage(t *testing.T) {
 			}
 
 			expectedResult = append(expectedResult, testEvent)
-			err := storage.Add(context.Background(), testEvent)
+			err := storage.Add(context.Background(), &testEvent)
 			require.Nilf(t, err, "Error: expected nil, but get %q", err)
 		}
 
@@ -74,7 +74,7 @@ func TestStorage(t *testing.T) {
 			}
 
 			expectedFullResult = append(expectedFullResult, testEvent)
-			_ = storage.Add(context.Background(), testEvent)
+			_ = storage.Add(context.Background(), &testEvent)
 		}
 
 		expectedResult := append(expectedFullResult[:3], expectedFullResult[6:]...)
@@ -131,7 +131,7 @@ func TestStorage(t *testing.T) {
 			}
 
 			expectedResult = append(expectedResult, testEvent)
-			_ = storage.Add(context.Background(), testEvent)
+			_ = storage.Add(context.Background(), &testEvent)
 		}
 
 		expectedResult[6] = newEvent
@@ -139,7 +139,7 @@ func TestStorage(t *testing.T) {
 			return expectedResult[j].ID > expectedResult[i].ID
 		})
 
-		err := storage.Update(context.Background(), newEvent)
+		err := storage.Update(context.Background(), &newEvent)
 		require.Nilf(t, err, "Error: expected nil, but get %q", err)
 
 		realResult, err := storage.List(context.Background(), "user")
@@ -152,7 +152,7 @@ func TestStorage(t *testing.T) {
 		storage := New()
 
 		var testEvent event.Event
-		var expectedResult []event.Event
+		expectedResult := make([]event.Event, 0, 10)
 
 		for i := 1; i <= 10; i++ {
 			testEvent = event.Event{
@@ -169,7 +169,7 @@ func TestStorage(t *testing.T) {
 			}
 
 			expectedResult = append(expectedResult, testEvent)
-			_ = storage.Add(context.Background(), testEvent)
+			_ = storage.Add(context.Background(), &testEvent)
 		}
 
 		realResult, err := storage.ListByNotify(context.Background(), 10)
@@ -204,7 +204,7 @@ func TestStorage(t *testing.T) {
 				End:         endEvent,
 			}
 
-			_ = storage.Add(context.Background(), testEvent)
+			_ = storage.Add(context.Background(), &testEvent)
 		}
 
 		err := storage.Clear(context.Background())
@@ -246,9 +246,9 @@ func TestStorage(t *testing.T) {
 			expectedResult = append(expectedResult, testEvent)
 
 			go func(eventTest event.Event, wg *sync.WaitGroup) {
-				err := storage.Add(context.Background(), eventTest)
-				require.Nilf(t, err, "Error: expected nil, but get %q", err)
+				err := storage.Add(context.Background(), &eventTest)
 				wg.Done()
+				require.Nilf(t, err, "Error: expected nil, but get %q", err)
 			}(testEvent, wg)
 		}
 		wg.Wait()
@@ -286,7 +286,7 @@ func TestStorage(t *testing.T) {
 			}
 
 			expectedResult = append(expectedResult, testEvent)
-			_ = storage.Add(context.Background(), testEvent)
+			_ = storage.Add(context.Background(), &testEvent)
 		}
 
 		expectedResult = expectedResult[25:]
@@ -295,8 +295,8 @@ func TestStorage(t *testing.T) {
 			wg.Add(1)
 			go func(id int64, wg *sync.WaitGroup) {
 				err := storage.Delete(context.Background(), id)
-				require.Nilf(t, err, "Error: expected nil, but get %q", err)
 				wg.Done()
+				require.Nilf(t, err, "Error: expected nil, but get %q", err)
 			}(int64(i), wg)
 		}
 		wg.Wait()
@@ -333,7 +333,7 @@ func TestStorage(t *testing.T) {
 			}
 
 			expectedResult = append(expectedResult, testEvent)
-			_ = storage.Add(context.Background(), testEvent)
+			_ = storage.Add(context.Background(), &testEvent)
 		}
 
 		for i := 1; i <= 50; i++ {
@@ -345,9 +345,8 @@ func TestStorage(t *testing.T) {
 					return result[j].ID > result[i].ID
 				})
 
-				require.Equal(t, expectedResult, result)
-
 				wg.Done()
+				require.Equal(t, expectedResult, result)
 			}(int64(i), wg)
 		}
 
@@ -378,7 +377,7 @@ func TestStorage(t *testing.T) {
 			}
 
 			expectedResult = append(expectedResult, testEvent)
-			_ = storage.Add(context.Background(), testEvent)
+			_ = storage.Add(context.Background(), &testEvent)
 		}
 
 		for i := 1; i <= 50; i++ {
@@ -397,7 +396,7 @@ func TestStorage(t *testing.T) {
 					End:         endEvent,
 				}
 
-				_ = storage.Update(context.Background(), testEvent)
+				_ = storage.Update(context.Background(), &testEvent)
 
 				wg.Done()
 			}(int64(i), wg)
@@ -428,9 +427,9 @@ func TestStorage(t *testing.T) {
 					End:         endEvent,
 				}
 
-				err := storage.Update(context.Background(), testEvent)
-				require.Nilf(t, err, "Error: expected nil, but get %q", err)
+				err := storage.Update(context.Background(), &testEvent)
 				wg.Done()
+				require.Nilf(t, err, "Error: expected nil, but get %q", err)
 			}(int64(i), wg)
 		}
 
@@ -459,7 +458,7 @@ func TestStorage(t *testing.T) {
 			}
 
 			expectedResult = append(expectedResult, testEvent)
-			_ = storage.Add(context.Background(), testEvent)
+			_ = storage.Add(context.Background(), &testEvent)
 		}
 
 		for i := 1; i <= 50; i++ {
@@ -471,9 +470,8 @@ func TestStorage(t *testing.T) {
 					return result[j].ID > result[i].ID
 				})
 
-				require.Equal(t, expectedResult, result)
-
 				wg.Done()
+				require.Equal(t, expectedResult, result)
 			}(int64(i), wg)
 		}
 

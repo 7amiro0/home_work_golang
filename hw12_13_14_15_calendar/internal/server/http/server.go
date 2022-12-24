@@ -45,9 +45,10 @@ func (s *HTTPServer) Stop(ctx context.Context) error {
 
 func (s *HTTPServer) createRouter() *httprouter.Router {
 	router := httprouter.New()
-	router.HandlerFunc("GET", "/list", s.list)
 	router.HandlerFunc("GET", "/add", s.add)
+	router.HandlerFunc("GET", "/list", s.list)
 	router.HandlerFunc("GET", "/update", s.update)
 	router.HandlerFunc("GET", "/delete", s.delete)
+	router.HandlerFunc("GET", "/listUpcoming", s.listUpcoming)
 	return router
 }

@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  integration_tests:
+    container_name: "tests"
+    restart: on-failure
+    depends_on:
+      - calendar
+      - scheduler
+      - sender
+    build:
+      context: ..
+      dockerfile: ./build/Dockerfile_test
+    environment:
+      - URL
+      - NAME_TEST_Q
+
+  sender:
+    build:
+      args:
+        build_file: "cmd_test/sender"
+    environment:
+      - NAME_TEST_Q
+      - AUTO_DELETE
+      - DURABLE
+      - MANDATORY
+      - IMMEDIATE
+      - EXCHANGE
+

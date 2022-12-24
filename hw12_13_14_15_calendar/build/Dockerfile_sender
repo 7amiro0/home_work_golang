@@ -3,6 +3,8 @@ FROM golang:1.19 as build
 ENV BIN_FILE /opt/sender/sender-app
 ENV CODE_DIR /go/src/
 
+ARG build_file
+
 WORKDIR ${CODE_DIR}
 
 COPY ./go.mod .
@@ -11,15 +13,12 @@ RUN go mod download
 
 COPY ./ ${CODE_DIR}
 
-ARG LDFLAGS
 RUN CGO_ENABLED=0 go build \
-        -ldflags "$LDFLAGS" \
-        -o ${BIN_FILE} ./cmd/sender/*
+        -o ${BIN_FILE} ./${build_file}/*
 
 FROM alpine:3.9
 
 ENV BIN_FILE "/opt/sender/sender-app"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
-
 
 CMD ${BIN_FILE}

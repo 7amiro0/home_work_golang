@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func createLog(ip, method, path, version, answer, browser string, latency time.Duration, date time.Time) string {
+func createLog(ip, method, path, version, answer string, browser []string, latency time.Duration, date time.Time) string {
 	return fmt.Sprintf("%s [%s] %s %s %s %s %s %s",
 		ip, date.Format("02-01-2006 15:04:05"), method,
 		path, version, answer, latency, browser)
@@ -29,7 +29,7 @@ func (middle) LoggingMiddleware(next http.Handler, logger Logger) http.Handler {
 		path := r.URL.Path
 		version := r.Proto
 		answer := "200"
-		browser := strings.Split(r.UserAgent(), " ")[0]
+		browser := strings.Split(r.UserAgent(), " ")
 		latency := time.Since(start)
 		logger.Info(createLog(ip, method, path, version, answer, browser, latency, date))
 	})

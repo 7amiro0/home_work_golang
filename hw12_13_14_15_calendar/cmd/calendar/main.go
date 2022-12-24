@@ -44,13 +44,11 @@ func main() {
 	defer cancel()
 
 	httpServer := internalhttp.NewHTTPServer(ctx, logg, calendar, net.JoinHostPort(config.HTTP.Host, config.HTTP.Port))
-	grpcServer, err := internalgrpc.NewGRPCServer(ctx, logg, calendar, net.JoinHostPort(config.GRPC.Host, config.GRPC.Port))
-	if err != nil {
-		logg.Fatal(err)
-	}
+	grpcServer := internalgrpc.NewGRPCServer(ctx, logg, calendar, net.JoinHostPort(config.GRPC.Host, config.GRPC.Port))
 
 	logg.Info("[INFO] Created new servers")
 
+	var err error
 	go func() {
 		<-ctx.Done()
 

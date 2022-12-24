@@ -5,7 +5,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-type Scheduler struct {
+type Sender struct {
 	conn    *amqp.Connection
 	channel *amqp.Channel
 	Logger  Logger
@@ -19,13 +19,13 @@ type OptionsReadQueue struct {
 	AutoAck, Exclusive, NoLocal, NoWait bool
 }
 
-func New(logger Logger) *Scheduler {
-	return &Scheduler{
+func New(logger Logger) *Sender {
+	return &Sender{
 		Logger: logger,
 	}
 }
 
-func (s *Scheduler) Start(name, url string, optRead OptionsReadQueue) (delivery <-chan amqp.Delivery, err error) {
+func (s *Sender) Start(name, url string, optRead OptionsReadQueue) (delivery <-chan amqp.Delivery, err error) {
 	if s.conn, err = amqp.Dial(url); err != nil {
 		s.Logger.Error("[ERR] Error connect to amqp: ", err)
 		return delivery, err
@@ -39,7 +39,7 @@ func (s *Scheduler) Start(name, url string, optRead OptionsReadQueue) (delivery 
 	return s.channel.Consume(name, "", optRead.AutoAck, optRead.Exclusive, optRead.NoLocal, optRead.NoWait, nil)
 }
 
-func (s *Scheduler) Stop() error {
+func (s *Sender) Stop() error {
 	if err := s.channel.Close(); err != nil {
 		s.Logger.Error("[ERR] error close to channel: ", err)
 		return err

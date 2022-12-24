@@ -27,21 +27,14 @@ run: build
 	$(SCHEDULER) --config ./configs/scheduler_config.yaml &
 	$(SENDER) --config ./configs/sender_config.yaml
 
-db:
-	systemctl start postgresql.service
-
 docker:
 	systemctl unmask docker && systemctl start docker && systemctl status docker
 
-rabbit:
-	sudo docker rm -f rabbitmq
-	sudo docker run -d --name rabbitmq -p 15672:15672 -p 5672:5672 rabbitmq:3-management
-
 up:
-	sudo docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.prod.yaml up --build
+	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.prod.yaml up --build
 
 down:
-	sudo docker-compose -f ./deployments/docker-compose.yaml down
+	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.yaml down
 
 version: build
 	$(CALENDAR) version
@@ -50,7 +43,13 @@ test:
 	go test -race ./internal/...
 
 integration-tests:
-	sudo docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.tests.yaml up --build
+	set -e ;\
+	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.test.yaml --env-file ./deployments/.env.test up --build -d ;\
+	test_status=0 ;\
+	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.test.yaml --env-file ./deployments/.env.test run integration_tests go test || test_status=$$? ;\
+	docker-compose -f ./deployments/docker-compose.yaml -f ./deployments/docker-compose.test.yaml down ;\
+	exit $$test_status ;\
+
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.41.1

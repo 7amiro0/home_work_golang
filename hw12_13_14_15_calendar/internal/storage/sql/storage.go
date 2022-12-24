@@ -12,11 +12,14 @@ import (
 )
 
 const (
-	dbInsert = "select new_event(userName:=$1, title:=$2, description:=$3, notify:=$4, startEvent:=$5, endEvent:=$6);"
-	dbUpdate = "update events set title=$1, description=$2, notify=$3, startEvent=$4, endEvent=$5 where events.id=$6;"
-	dbSelect = "select events.id, users.id, name, title, description, notify, startEvent, endEvent from users, events where userID = (select users.id where name=$1);"
-	dbDelete = "delete from events where id=$1;"
+	//For server
+	dbInsert       = "select new_event(userName:=$1, title:=$2, description:=$3, notify:=$4, startEvent:=$5, endEvent:=$6);"
+	dbUpdate       = "update events set title=$1, description=$2, notify=$3, startEvent=$4, endEvent=$5 where events.id=$6;"
+	dbSelect       = "select events.id, users.id, name, title, description, notify, startEvent, endEvent from users, events where userID = (select users.id where name=$1);"
+	dbSelectByTime = "select events.id, users.id, name, title, description, notify, startEvent, endEvent from users, events where userID = (select users.id where name=$1) and startEvent between $2 and $3;"
+	dbDelete       = "delete from events where id=$1;"
 
+	//For scheduler
 	//I don`t use between in this because notify send in queue twice
 	dbSelectByNotify = "select * from events where notify >= $1 and notify < $2;"
 	dbClear          = "delete from events where endEvent < $1;"
@@ -83,6 +86,7 @@ func (s *Storage) Update(ctx context.Context, event *storage.Event) (err error) 
 		event.End.Round(time.Minute).UTC(),
 		event.ID,
 	)
+
 	return err
 }
 
@@ -105,11 +109,13 @@ func (s *Storage) Close(ctx context.Context) (err error) {
 	return s.db.Close(ctx)
 }
 
-func getEventList(rows pgx.Rows) (events []storage.Event, err error) {
+func getEventList(rows pgx.Rows) ([]storage.Event, error) {
 	var (
 		event storage.Event
 		date  time.Time
+		err   error
 	)
+	events := make([]storage.Event, 0, 1)
 
 	for rows.Next() {
 		err = rows.Scan(
@@ -136,16 +142,35 @@ func getEventList(rows pgx.Rows) (events []storage.Event, err error) {
 }
 
 func (s *Storage) Clear(ctx context.Context) error {
-	_, err := s.db.Exec(ctx, dbClear, time.Now().Add(-time.Hour*24*30*12))
+	_, err := s.db.Exec(ctx, dbClear, time.Now().Add(-time.Hour*24*30*12).UTC())
 	return err
+}
+
+func (s *Storage) ListUpcoming(ctx context.Context, userName string, until time.Duration) ([]storage.Event, error) {
+	now := time.Now().UTC().Round(time.Minute)
+
+	now, err := time.ParseInLocation(time.RFC3339Nano, now.Format(time.RFC3339Nano), time.UTC)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.db.Query(ctx, dbSelectByTime, userName, now, now.Add(until))
+	if err != nil {
+		logger.Error("[ERR] DB select query: ", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	return getEventList(rows)
 }
 
 func (s *Storage) List(ctx context.Context, userName string) ([]storage.Event, error) {
 	rows, err := s.db.Query(ctx, dbSelect, userName)
 	if err != nil {
-		logger.Error("[ERR] DB select by user id query: ", err)
+		logger.Error("[ERR] DB select query: ", err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	return getEventList(rows)
 }
@@ -159,6 +184,7 @@ func (s *Storage) ListByNotify(ctx context.Context, until time.Duration) ([]stor
 		logger.Error("[ERR] DB select by notify query: ", err)
 		return nil, err
 	}
+	defer rows.Close()
 
 	return getEventList(rows)
 }

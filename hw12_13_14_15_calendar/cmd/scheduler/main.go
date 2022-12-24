@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/logger"
 	s "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/notify/scheduler"
 	sqlStorage "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage/sql"
-	"gopkg.in/yaml.v3"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -13,16 +14,22 @@ import (
 	"time"
 )
 
+var (
+	addTime   time.Duration
+	clearTime time.Duration
+)
+
 func addInQueue(schedule *s.Scheduler, exchange string, mandatory, immediate bool) error {
 	var serializedEvent []byte
 
-	events, err := schedule.List(time.Minute * 1)
+	schedule.Logger.Info(addTime)
+	events, err := schedule.List(addTime)
 	if err != nil {
 		return err
 	}
 
 	for _, event := range events {
-		serializedEvent, err = yaml.Marshal(event)
+		serializedEvent, err = json.Marshal(event)
 
 		err = schedule.AddInQueue(serializedEvent, exchange, mandatory, immediate)
 		if err != nil {
@@ -40,6 +47,9 @@ func main() {
 	config := NewConfig()
 	logg := logger.New(config.Logger.Level)
 	storage := sqlStorage.New(logg)
+	addTime = config.Ticker.Add
+	clearTime = config.Ticker.Clear
+	log.Println("Ticker", addTime, clearTime)
 
 	var ticker *time.Ticker
 	var mutex = &sync.Mutex{}
@@ -51,13 +61,13 @@ func main() {
 	schedule := s.New(ctx, storage, logg)
 	logg.Info("[INFO] Created new scheduler")
 	err := schedule.Start(
-		config.RabbetInfo.Name,
-		config.RabbetInfo.Url,
+		config.RabbitInfo.Name,
+		config.RabbitInfo.Url,
 		s.OptionsQueue{
-			NoWait:     config.RabbetInfo.NoWait,
-			Durable:    config.RabbetInfo.Durable,
-			Exclusive:  config.RabbetInfo.Exclusive,
-			AutoDelete: config.RabbetInfo.AutoDelete,
+			NoWait:     config.RabbitInfo.NoWait,
+			Durable:    config.RabbitInfo.Durable,
+			Exclusive:  config.RabbitInfo.Exclusive,
+			AutoDelete: config.RabbitInfo.AutoDelete,
 		},
 	)
 
@@ -66,10 +76,17 @@ func main() {
 		logg.Error("[ERR] While starting scheduler: ", err)
 		os.Exit(1)
 	}
+	defer func() {
+		if err = schedule.Stop(); err != nil {
+			logg.Fatal("[FATAL] While stoping scheduler: ", err)
+		}
+
+		logg.Info("[INFO] Scheduler stoped")
+	}()
 
 	go func(mx *sync.Mutex) {
 		logg.Info("[INFO] Start clearer")
-		ticker = time.NewTicker(time.Hour * 24)
+		ticker = time.NewTicker(clearTime)
 		for {
 			select {
 			case <-ctx.Done():
@@ -87,7 +104,7 @@ func main() {
 
 	go func(mx *sync.Mutex) {
 		logg.Info("[INFO] Start adder")
-		ticker = time.NewTicker(time.Minute * 1)
+		ticker = time.NewTicker(addTime)
 		for {
 			select {
 			case <-ctx.Done():
@@ -106,10 +123,4 @@ func main() {
 	logg.Info("[INFO] Scheduler running")
 
 	<-ctx.Done()
-
-	if err = schedule.Stop(); err != nil {
-		logg.Error("[ERR] while stoping scheduler: ", err)
-	}
-
-	logg.Info("[INFO] Scheduler stoped")
 }

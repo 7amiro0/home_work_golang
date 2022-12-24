@@ -8,3 +8,8 @@ services:
   migrate:
     volumes:
       - ./migrations/postgres:/migrations
+
+  sender:
+    build:
+      args:
+        build_file: "cmd/sender"

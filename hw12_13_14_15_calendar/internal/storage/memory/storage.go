@@ -50,8 +50,8 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) Add(_ context.Context, event storage.Event) (err error) {
-	s.storage.Store(event.ID, event)
+func (s *Storage) Add(_ context.Context, event *storage.Event) (err error) {
+	s.storage.Store(event.ID, *event)
 	return err
 }
 
@@ -64,13 +64,13 @@ func (s *Storage) Delete(_ context.Context, id int64) (err error) {
 	return err
 }
 
-func (s *Storage) Update(_ context.Context, event storage.Event) (err error) {
+func (s *Storage) Update(_ context.Context, event *storage.Event) (err error) {
 	_, ok := s.storage.Load(event.ID)
 	if !ok {
 		return fmt.Errorf(ErrEventNotExist.Error(), event.ID)
 	}
 
-	s.storage.Store(event.ID, event)
+	s.storage.Store(event.ID, *event)
 
 	return err
 }
@@ -86,6 +86,25 @@ func (s *Storage) Clear(_ context.Context) error {
 	})
 
 	return nil
+}
+
+func (s *Storage) ListUpcoming(_ context.Context, userName string, until time.Duration) ([]storage.Event, error) {
+	var valueEvent storage.Event
+	now := time.Now().UTC()
+	end := now.Add(until)
+	result := make([]storage.Event, 0, 1)
+	s.storage.Range(func(key, value any) bool {
+		valueEvent = value.(storage.Event)
+		if valueEvent.User.Name == userName {
+			if valueEvent.Start.Round(storage.Day).After(now) && valueEvent.Start.Round(storage.Day).Before(end) {
+				result = append(result, value.(storage.Event))
+			}
+		}
+
+		return true
+	})
+
+	return result, nil
 }
 
 func (s *Storage) List(_ context.Context, userName string) ([]storage.Event, error) {

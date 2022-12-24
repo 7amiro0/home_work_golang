@@ -34,6 +34,7 @@ type BaseStorage interface {
 	Update(ctx context.Context, event *storage.Event) error
 	Add(ctx context.Context, event *storage.Event) error
 	List(ctx context.Context, userName string) ([]storage.Event, error)
+	ListUpcoming(ctx context.Context, userName string, until time.Duration) ([]storage.Event, error)
 }
 
 type Storage interface {
@@ -71,4 +72,8 @@ func (a *App) Update(ctx context.Context, newEvent *storage.Event) error {
 
 func (a *App) List(ctx context.Context, userName string) ([]storage.Event, error) {
 	return a.Storage.List(ctx, userName)
+}
+
+func (a *App) ListUpcoming(ctx context.Context, userName string, until time.Duration) ([]storage.Event, error) {
+	return a.Storage.ListUpcoming(ctx, userName, until)
 }

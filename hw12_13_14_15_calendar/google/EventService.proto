@@ -32,10 +32,26 @@ service Storage {
       get: "/list/{user.name}"
     };
   };
+
+  rpc ListUpcoming(Until) returns (Events) {
+    option (google.api.http) = {
+      get: "/listUpcoming/{event.user.name}/{until}"
+    };
+  };
 }
 
 message Events {
   repeated Event events = 1;
+}
+
+message Until {
+  enum Per {
+    day = 0;
+    week = 1;
+    month = 2;
+  }
+  Per until = 1;
+  Event event = 2;
 }
 
 message User {

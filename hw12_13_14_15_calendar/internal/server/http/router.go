@@ -1,6 +1,7 @@
 package internalhttp
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/server"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
@@ -20,6 +21,7 @@ const (
 	argNotify      = "notify"
 	argStart       = "start"
 	argEnd         = "end"
+	argUntil       = "until"
 )
 
 type EventString struct {
@@ -31,6 +33,7 @@ type EventString struct {
 	notify      string
 	start       string
 	end         string
+	until       string
 }
 
 func newEventString(r *http.Request) EventString {
@@ -43,6 +46,7 @@ func newEventString(r *http.Request) EventString {
 		notify:      r.FormValue(argNotify),
 		start:       r.FormValue(argStart),
 		end:         r.FormValue(argEnd),
+		until:       r.FormValue(argUntil),
 	}
 }
 
@@ -157,9 +161,51 @@ func (s *HTTPServer) update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *HTTPServer) list(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPServer) listUpcoming(w http.ResponseWriter, r *http.Request) {
+	var until time.Duration
 	eventS := newEventString(r)
 
+	untilUint, err := strconv.ParseUint(eventS.until, 10, 64)
+	if err != nil {
+		s.server.Logger.Error("[ERR] Cannot convert until to uint: ", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	switch untilUint {
+	case 0:
+		until = storage.Day
+	case 1:
+		until = storage.Week
+	case 2:
+		until = storage.Month
+	}
+
+	res, err := s.server.App.ListUpcoming(s.server.Ctx, eventS.userName, until)
+	if err != nil {
+		s.server.Logger.Error("[ERR] Cannot list events: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].ID < res[j].ID
+	})
+
+	str, err := json.Marshal(storage.SliceEvents{Events: res})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(str)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func (s *HTTPServer) list(w http.ResponseWriter, r *http.Request) {
+	eventS := newEventString(r)
 	res, err := s.server.App.List(s.server.Ctx, eventS.userName)
 	if err != nil {
 		s.server.Logger.Error("[ERR] Cannot list events: ", err)
@@ -170,21 +216,15 @@ func (s *HTTPServer) list(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(res, func(i, j int) bool {
 		return res[i].ID < res[j].ID
 	})
-	for _, event := range res {
-		str := fmt.Sprintf(
-			"%v %s %s %v %s %s\n",
-			event.ID,
-			event.Title,
-			event.Description,
-			event.Notify,
-			event.Start,
-			event.End,
-		)
 
-		_, err = w.Write([]byte(str))
+	str, err := json.Marshal(storage.SliceEvents{Events: res})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(str)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }

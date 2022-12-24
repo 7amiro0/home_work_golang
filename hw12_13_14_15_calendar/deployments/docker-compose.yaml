@@ -17,12 +17,12 @@ services:
       - LEVEL=${LOGGER_LEVEL}
 
       # grpc
-      - GRPC_HOST=${GRPC_HOST}
-      - GRPC_PORT=${GRPC_PORT}
+      - GRPC_HOST
+      - GRPC_PORT
 
       # http
-      - HTTP_HOST=${HTTP_HOST}
-      - HTTP_PORT=${HTTP_PORT}
+      - HTTP_HOST
+      - HTTP_PORT
 
       # storage
       - STORAGE=${TYPE_STORAGE}
@@ -47,16 +47,20 @@ services:
       # logger
       - LEVEL=${LOGGER_LEVEL}
 
+      #ticker
+      - ADD
+      - CLEAR
+
       # rabbit
-      - URL=${URL}
-      - NAME_Q=${NAME_Q}
-      - NO_WAIT=${NO_WAIT}
-      - DURABLE=${DURABLE}
-      - EXCLUSIVE=${EXCLUSIVE}
-      - AUTO_DELETE=${AUTO_DELETE}
-      - EXCHANGE=${EXCHANGE}
-      - MANDATORY=${MANDATORY}
-      - IMMEDIATE=${IMMEDIATE}
+      - URL
+      - NAME_Q
+      - NO_WAIT
+      - DURABLE
+      - EXCLUSIVE
+      - AUTO_DELETE
+      - EXCHANGE
+      - MANDATORY
+      - IMMEDIATE
 
       # sql
       - USER=${DB_USER}
@@ -75,18 +79,16 @@ services:
     depends_on:
       - rabbit
     environment:
-      - URL=${URL}
-      - NAME_Q=${NAME_Q}
-      - AUTO_ACK=${AUTO_ACK}
+      - URL
+      - NAME_Q
+      - AUTO_ACK
       - EXCLUSIVE=${EXCLUSIVE_CONSUMER}
-      - NO_LOCAL=${NO_LOCAL}
+      - NO_LOCAL
       - NO_WAIT=${NO_WAIT_CONSUMER}
 
   db:
     container_name: "db"
     image: postgres:15.1-alpine
-#    volumes:
-#      - ../.database/postgres/data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     environment:
@@ -100,8 +102,6 @@ services:
     container_name: "migrate"
     restart: on-failure
     image: migrate/migrate
-#    volumes:
-#      - ./migrations/postgres:/migrations
     command: [/opt/migrate/goose, postgres, "host=${DB_HOST} password=${DB_PASSWORD} port=${DB_PORT} user=${DB_USER} dbname=${DB_NAME} sslmode=disable", up]
     build:
       context: ..
