@@ -39,9 +39,7 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	}
 
 	if err := complete.Wait(); err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			returnCode = exitError.ExitCode()
-		}
+		returnCode = 1
 	}
 
 	return returnCode

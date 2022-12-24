@@ -2,7 +2,6 @@ package hw05parallelexecution
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 )
 
@@ -11,7 +10,6 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 type Task func() error
 
 func handleErrors(chQuit chan error, chErr chan error, numTask int, maxErrorNumber int) error {
-	fmt.Println()
 	var resError error = nil
 	counterErr := 0
 	counterFinish := 0

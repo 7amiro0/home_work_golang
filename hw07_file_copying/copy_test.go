@@ -19,9 +19,7 @@ func TestCopy(t *testing.T) {
 		outBytes, _ := ioutil.ReadAll(outFile)
 
 		require.Equalf(t, string(fromBytes), string(outBytes), "Fail: \"out.txt\" not equal \"testdata/input.txt\"\n")
-		fromFile.Close()
-		outFile.Close()
-		os.Remove("out.txt")
+		os.RemoveAll("out.txt")
 	})
 
 	t.Run("Test: offset exceeds file size", func(t *testing.T) {
@@ -41,9 +39,7 @@ func TestCopy(t *testing.T) {
 		outBytes, _ := ioutil.ReadAll(outFile)
 
 		require.Equalf(t, string(fromBytes), string(outBytes), "Fail: \"out.txt\" not equal \"testdata/input.txt\"\n")
-		fromFile.Close()
-		outFile.Close()
-		os.Remove("out.jpg")
+		os.RemoveAll("out.txt")
 	})
 
 	t.Run("Test: unsupported open file", func(t *testing.T) {

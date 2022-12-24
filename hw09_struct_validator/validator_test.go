@@ -285,12 +285,11 @@ func TestValidate(t *testing.T) {
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("case %d", i+1), func(t *testing.T) {
 			tt := tt
-			//t.Parallel()
+			t.Parallel()
 			err := Validate(tt.in)
 			if tt.expectedErr == nil {
 				require.Nilf(t, err, "expected nil but received %q", err)
 			} else if tt.expectedErr != nil {
-				//fmt.Printf("%q %T\n%q %T\n", tt.expectedErr, tt.expectedErr, err, err)
 				require.Equalf(t, tt.expectedErr, err, "expected %q but received %q", tt.expectedErr, err)
 
 				require.True(t, reflect.DeepEqual(tt.expectedErr, err))

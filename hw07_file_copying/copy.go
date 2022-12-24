@@ -40,12 +40,5 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	io.CopyN(outFile, rd, limit)
 	bar.Finish()
 
-	if errorClose := fromFile.Close(); errorClose != nil {
-		return errorClose
-	}
-	if errorClose := outFile.Close(); errorClose != nil {
-		return errorClose
-	}
-
 	return nil
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -29,7 +28,7 @@ func getFirstString(file *os.File) string {
 }
 
 func ReadDir(dir string) (Environment, error) {
-	allFiles, err := ioutil.ReadDir(dir)
+	allFiles, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +39,7 @@ func ReadDir(dir string) (Environment, error) {
 			continue
 		}
 
-		openFile, err := os.Open(dir + string(os.PathSeparator) + file.Name())
+		openFile, err := os.Open(dir + "/" + file.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -48,16 +47,12 @@ func ReadDir(dir string) (Environment, error) {
 		needRemove := false
 
 		firstLine := getFirstString(openFile)
-		if file.Size() == 0 {
+
+		if info, _ := file.Info(); info.Size() == 0 {
 			needRemove = true
 		}
 
 		data[file.Name()] = EnvValue{firstLine, needRemove}
-
-		err = openFile.Close()
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return data, nil

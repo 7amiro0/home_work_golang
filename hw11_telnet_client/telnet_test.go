@@ -13,7 +13,7 @@ import (
 )
 
 func TestTelnetClient(t *testing.T) {
-	t.Run("basic", func(t *testing.T) {
+	t.Run("server", func(t *testing.T) {
 		l, err := net.Listen("tcp", "127.0.0.1:")
 		require.NoError(t, err)
 		defer func() { require.NoError(t, l.Close()) }()
