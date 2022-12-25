@@ -6,9 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/logger"
+	sh "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/notify/scheduler"
 	s "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/notify/sender"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
-	"github.com/streadway/amqp"
+	storageSql "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage/sql"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,30 +23,21 @@ func main() {
 	defer cancel()
 
 	logg := logger.New(config.Logger.Level)
-
-	conn, err := amqp.Dial(config.RabbitInfo.Url)
-	if err != nil {
-		logg.Fatal("[FATAL] Error connect to amqp: ", err)
-	}
-	defer conn.Close()
-
-	channel, err := conn.Channel()
+	store := storageSql.New(logg)
+	scheduler := sh.New(ctx, store, logg)
+	err := scheduler.Start(
+		config.RabbitInfo.NameTest,
+		config.RabbitInfo.Url,
+		sh.OptionsQueue{
+			NoWait:     config.RabbitInfo.NoWait,
+			Durable:    config.RabbitInfo.Durable,
+			Exclusive:  config.RabbitInfo.Exclusive,
+			AutoDelete: config.RabbitInfo.AutoDelete,
+		})
 	if err != nil {
 		logg.Fatal("[FATAL] Error connect to channel: ", err)
 	}
-	defer channel.Close()
-
-	queue, err := channel.QueueDeclare(
-		config.RabbitInfo.NameTest,
-		config.RabbitInfo.Durable,
-		config.RabbitInfo.AutoDelete,
-		config.RabbitInfo.Exclusive,
-		config.RabbitInfo.NoWait,
-		nil,
-	)
-	if err != nil {
-		logg.Fatal("[FATAL] Error queue declare: ", err)
-	}
+	defer scheduler.Stop()
 
 	sender := s.New(logg)
 	logg.Info("[INFO] Created new sender")
@@ -66,12 +58,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err != nil {
-		cancel()
-		logg.Error("[ERR] While start sender: ", err)
-		os.Exit(1)
-	}
-
 	go func() {
 		logg.Info("[INFO] Start read queue")
 		var event storage.Event
@@ -82,16 +68,7 @@ func main() {
 				continue
 			}
 
-			err = channel.Publish(
-				config.RabbitInfo.Exchange,
-				queue.Name,
-				config.RabbitInfo.Mandatory,
-				config.RabbitInfo.Immediate,
-				amqp.Publishing{
-					ContentType: "application/json",
-					Body:        msg.Body,
-				},
-			)
+			err = scheduler.AddInQueue(msg.Body, "", false, false)
 			if err != nil {
 				logg.Error("[ERR] Can`t publish msg: ", err)
 			}

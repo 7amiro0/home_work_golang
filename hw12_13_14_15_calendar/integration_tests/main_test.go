@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/integration_test"
+	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/logger"
+	s "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/notify/sender"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
-	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"os"
@@ -216,23 +217,11 @@ func TestAPI(t *testing.T) {
 	})
 
 	t.Run("main function api", func(t *testing.T) {
-		conn, err := amqp.Dial(os.Getenv("URL"))
-		require.NoErrorf(t, err, "expected nil but get %q", err)
-		defer conn.Close()
+		loggerLevel := os.Getenv("LEVEL")
+		logg := logger.New(loggerLevel)
+		sender := s.New(logg)
 
-		channel, err := conn.Channel()
-		require.NoErrorf(t, err, "expected nil but get %q", err)
-		defer channel.Close()
-
-		consumer, err := channel.Consume(
-			os.Getenv("NAME_TEST_Q"),
-			"",
-			false,
-			false,
-			false,
-			false,
-			nil,
-		)
+		consumer, err := sender.Start(os.Getenv("NAME_TEST_Q"), os.Getenv("URL"), s.OptionsReadQueue{})
 		require.NoErrorf(t, err, "expected nil but get %q", err)
 
 		now := time.Now().UTC().Round(time.Minute)
