@@ -2,17 +2,12 @@ package main
 
 import (
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/cmd"
+	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-)
-
-const (
-	year  = 365 * 24 * time.Hour
-	mouth = 30 * 24 * time.Hour
-	day   = 24 * time.Hour
 )
 
 type Config struct {
@@ -28,22 +23,21 @@ type Ticker struct {
 	Clear time.Duration `yaml:"clear"`
 }
 
+// TODO
 func convertToDuration(per []string) time.Duration {
 	yInt, _ := strconv.Atoi(strings.Split(per[0], "y")[0])
 	mInt, _ := strconv.Atoi(strings.Split(per[1], "m")[0])
 	dInt, _ := strconv.Atoi(strings.Split(per[2], "d")[0])
 	hInt, _ := strconv.Atoi(strings.Split(per[3], "h")[0])
 	minInt, _ := strconv.Atoi(strings.Split(per[4], "min")[0])
-	sInt, _ := strconv.Atoi(strings.Split(per[5], "s")[0])
 
-	y := time.Duration(yInt) * year
-	m := time.Duration(mInt) * mouth
-	d := time.Duration(dInt) * day
+	y := time.Duration(yInt) * storage.Month * 12
+	m := time.Duration(mInt) * storage.Month
+	d := time.Duration(dInt) * storage.Day
 	h := time.Duration(hInt) * time.Hour
 	min := time.Duration(minInt) * time.Minute
-	s := time.Duration(sInt) * time.Second
 
-	return y + m + d + h + min + s
+	return y + m + d + h + min
 }
 
 func (t *Ticker) Set() {
@@ -62,21 +56,6 @@ type RabbitConfig struct {
 	AutoDelete bool   `yaml:"autoDelete"`
 }
 
-func parseBool(envs ...string) (result map[string]bool, err error) {
-	result = make(map[string]bool)
-	var opt bool
-	for _, env := range envs {
-		opt, err = strconv.ParseBool(env)
-		if err != nil {
-			return nil, err
-		}
-
-		result[env] = opt
-	}
-
-	return result, err
-}
-
 func (rc *RabbitConfig) Set() {
 	exclusive := os.Getenv("EXCLUSIVE")
 	autoDelete := os.Getenv("AUTO_DELETE")
@@ -86,8 +65,7 @@ func (rc *RabbitConfig) Set() {
 	rc.Url = os.Getenv("URL")
 	rc.Name = os.Getenv("NAME_Q")
 
-	envs, err := parseBool(exclusive, autoDelete, durable, noWait)
-
+	envs, err := cmd.ParseBool(exclusive, autoDelete, durable, noWait)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -106,12 +84,10 @@ type OptAddInQueue struct {
 
 func (opt *OptAddInQueue) Set() {
 	opt.exchange = os.Getenv("EXCHANGE")
-
 	mandatory := os.Getenv("MANDATORY")
 	immediate := os.Getenv("IMMEDIATE")
 
-	envs, err := parseBool(mandatory, immediate)
-
+	envs, err := cmd.ParseBool(mandatory, immediate)
 	if err != nil {
 		log.Fatal(err)
 	}

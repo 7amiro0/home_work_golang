@@ -13,12 +13,11 @@ import (
 
 func main() {
 	config := NewConfig()
+	logg := logger.New(config.Logger.Level)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
-
-	logg := logger.New(config.Logger.Level)
 
 	sender := s.New(logg)
 	logg.Info("[INFO] Created new sender")
@@ -35,16 +34,9 @@ func main() {
 
 	if err != nil {
 		cancel()
-		logg.Error("[ERR] While start sender: ", err)
+		logg.Error("[ERR] Failed to start sender: ", err)
 		os.Exit(1)
 	}
-	defer func() {
-		if err = sender.Stop(); err != nil {
-			logg.Error("[ERR] While stoping sender: ", err)
-		}
-
-		logg.Info("[INFO] Sender stoped")
-	}()
 
 	go func() {
 		logg.Info("[INFO] Start read queue")
@@ -67,4 +59,10 @@ func main() {
 	logg.Info("[INFO] Sender running")
 
 	<-ctx.Done()
+
+	if err = sender.Stop(); err != nil {
+		logg.Error("[ERR] Failed to stop sender: ", err)
+	}
+
+	logg.Info("[INFO] Sender has been stopped")
 }

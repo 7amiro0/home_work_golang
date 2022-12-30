@@ -37,7 +37,6 @@ func NewConfig() (config Config) {
 	config.HTTP.Set()
 	config.GRPC.Set()
 	config.Logger.Set()
-	config.Storage = os.Getenv("STORAGE")
 
 	return config
 }

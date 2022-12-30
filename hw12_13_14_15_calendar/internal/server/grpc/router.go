@@ -58,11 +58,32 @@ func (s *GRPCServer) Update(ctx context.Context, pbEvent *pb.Event) (*emptypb.Em
 	return nil, s.server.App.Update(ctx, &event)
 }
 
+func getListEvents(events storage.SliceEvents) *pb.Events {
+	var list []*pb.Event
+
+	for _, event := range events.Events {
+		even := &pb.Event{
+			Id:    event.ID,
+			Title: event.Title,
+			User: &pb.User{
+				Name: event.User.Name,
+				Id:   event.User.ID,
+			},
+			Description: event.Description,
+			Notify:      event.Notify,
+			End:         timestamppb.New(event.End),
+			Start:       timestamppb.New(event.Start),
+		}
+
+		list = append(list, even)
+	}
+
+	return &pb.Events{Events: list}
+}
+
 func (s *GRPCServer) ListUpcoming(ctx context.Context, until *pb.Until) (*pb.Events, error) {
-	var (
-		list     pb.Events
-		duration time.Duration
-	)
+	var duration time.Duration
+
 	switch until.GetUntil() {
 	case 0:
 		duration = storage.Day
@@ -74,54 +95,19 @@ func (s *GRPCServer) ListUpcoming(ctx context.Context, until *pb.Until) (*pb.Eve
 
 	events, err := s.server.App.ListUpcoming(ctx, until.GetEvent().GetUser().GetName(), duration)
 	if err != nil {
-		s.server.Logger.Error("[ERR] While list storage: ", err)
+		s.server.Logger.Error("[ERR] While listing storage: ", err)
 		return nil, err
 	}
 
-	for _, event := range events {
-		even := &pb.Event{
-			Id:    event.ID,
-			Title: event.Title,
-			User: &pb.User{
-				Name: event.User.Name,
-				Id:   event.User.ID,
-			},
-			Description: event.Description,
-			Notify:      event.Notify,
-			End:         timestamppb.New(event.End),
-			Start:       timestamppb.New(event.Start),
-		}
-
-		list.Events = append(list.Events, even)
-	}
-
-	return &list, nil
+	return getListEvents(events), nil
 }
 
 func (s *GRPCServer) List(ctx context.Context, pbEvent *pb.Event) (*pb.Events, error) {
-	var list pb.Events
 	events, err := s.server.App.List(ctx, pbEvent.GetUser().GetName())
 	if err != nil {
-		s.server.Logger.Error("[ERR] While list storage: ", err)
+		s.server.Logger.Error("[ERR] While listing storage: ", err)
 		return nil, err
 	}
 
-	for _, event := range events {
-		even := &pb.Event{
-			Id:    event.ID,
-			Title: event.Title,
-			User: &pb.User{
-				Name: event.User.Name,
-				Id:   event.User.ID,
-			},
-			Description: event.Description,
-			Notify:      event.Notify,
-			End:         timestamppb.New(event.End),
-			Start:       timestamppb.New(event.Start),
-		}
-
-		list.Events = append(list.Events, even)
-	}
-
-	return &list, nil
+	return getListEvents(events), nil
 }

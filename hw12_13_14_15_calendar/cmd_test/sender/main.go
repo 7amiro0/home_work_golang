@@ -9,7 +9,6 @@ import (
 	sh "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/notify/scheduler"
 	s "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/notify/sender"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
-	storageSql "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage/sql"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,13 +16,13 @@ import (
 
 func main() {
 	config := NewConfig()
+	logg := logger.New(config.Logger.Level)
+	store := storage.New(config.Logger.Level)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	logg := logger.New(config.Logger.Level)
-	store := storageSql.New(logg)
 	scheduler := sh.New(ctx, store, logg)
 	err := scheduler.Start(
 		config.RabbitInfo.NameTest,
@@ -35,7 +34,8 @@ func main() {
 			AutoDelete: config.RabbitInfo.AutoDelete,
 		})
 	if err != nil {
-		logg.Fatal("[FATAL] Error connect to channel: ", err)
+		logg.Error("[ERR] Error connect to channel: ", err)
+		os.Exit(1)
 	}
 	defer scheduler.Stop()
 
@@ -54,7 +54,7 @@ func main() {
 
 	if err != nil {
 		cancel()
-		logg.Error("[ERR] While start sender: ", err)
+		logg.Error("[ERR] Failed to start sender: ", err)
 		os.Exit(1)
 	}
 
@@ -85,8 +85,8 @@ func main() {
 	<-ctx.Done()
 
 	if err = sender.Stop(); err != nil {
-		logg.Error("[ERR] While stoping sender: ", err)
+		logg.Error("[ERR] Failed to stop sender: ", err)
 	}
 
-	logg.Info("[INFO] Sender stoped")
+	logg.Info("[INFO] Sender has been stopped")
 }

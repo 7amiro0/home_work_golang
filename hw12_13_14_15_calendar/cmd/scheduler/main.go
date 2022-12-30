@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/logger"
 	s "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/notify/scheduler"
-	sqlStorage "github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage/sql"
-	"log"
+	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
 	"os"
 	"os/signal"
 	"sync"
@@ -22,13 +21,12 @@ var (
 func addInQueue(schedule *s.Scheduler, exchange string, mandatory, immediate bool) error {
 	var serializedEvent []byte
 
-	schedule.Logger.Info(addTime)
-	events, err := schedule.List(addTime)
+	sliceEvents, err := schedule.List(addTime)
 	if err != nil {
 		return err
 	}
 
-	for _, event := range events {
+	for _, event := range sliceEvents.Events {
 		serializedEvent, err = json.Marshal(event)
 
 		err = schedule.AddInQueue(serializedEvent, exchange, mandatory, immediate)
@@ -37,7 +35,7 @@ func addInQueue(schedule *s.Scheduler, exchange string, mandatory, immediate boo
 			return err
 		}
 
-		schedule.Logger.Info("[INFO] Add event ", event, " with error ", err)
+		schedule.Logger.Info("[INFO] Add event ", event)
 	}
 
 	return err
@@ -46,10 +44,10 @@ func addInQueue(schedule *s.Scheduler, exchange string, mandatory, immediate boo
 func main() {
 	config := NewConfig()
 	logg := logger.New(config.Logger.Level)
-	storage := sqlStorage.New(logg)
+	store := storage.New(config.Logger.Level)
+
 	addTime = config.Ticker.Add
 	clearTime = config.Ticker.Clear
-	log.Println("Ticker", addTime, clearTime)
 
 	var ticker *time.Ticker
 	var mutex = &sync.Mutex{}
@@ -58,8 +56,10 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	schedule := s.New(ctx, storage, logg)
+	schedule := s.New(ctx, store, logg)
+
 	logg.Info("[INFO] Created new scheduler")
+
 	err := schedule.Start(
 		config.RabbitInfo.Name,
 		config.RabbitInfo.Url,
@@ -73,19 +73,12 @@ func main() {
 
 	if err != nil {
 		cancel()
-		logg.Error("[ERR] While starting scheduler: ", err)
+		logg.Error("[ERR] Failed to start scheduler: ", err)
 		os.Exit(1)
 	}
-	defer func() {
-		if err = schedule.Stop(); err != nil {
-			logg.Fatal("[FATAL] While stoping scheduler: ", err)
-		}
-
-		logg.Info("[INFO] Scheduler stoped")
-	}()
 
 	go func(mx *sync.Mutex) {
-		logg.Info("[INFO] Start clearer")
+		logg.Info("[INFO] Start cleaner")
 		ticker = time.NewTicker(clearTime)
 		for {
 			select {
@@ -96,7 +89,7 @@ func main() {
 				err = schedule.Clear()
 				mx.Unlock()
 				if err != nil {
-					logg.Error("[ERR] While working cleaner: ", err)
+					logg.Error("[ERR] Cleaner: ", err)
 				}
 			}
 		}
@@ -123,4 +116,10 @@ func main() {
 	logg.Info("[INFO] Scheduler running")
 
 	<-ctx.Done()
+
+	if err = schedule.Stop(); err != nil {
+		logg.Error("[ERR] Failed to stop scheduler: ", err)
+	}
+
+	logg.Info("[INFO] Scheduler has been stopped")
 }

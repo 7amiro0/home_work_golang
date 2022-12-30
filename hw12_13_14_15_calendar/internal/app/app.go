@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-type App struct {
-	Logger  Logger
-	Storage Storage
-}
-
 type Logger interface {
 	Error(msg ...any)
 	Debug(msg ...any)
@@ -24,56 +19,57 @@ type ConnCloser interface {
 	Close(ctx context.Context) error
 }
 
-type StorageQueue interface {
-	Clear(ctx context.Context) error
-	ListByNotify(ctx context.Context, until time.Duration) ([]storage.Event, error)
+type App struct {
+	Logger  Logger
+	Storage StorageCalendar
 }
 
-type BaseStorage interface {
-	Delete(ctx context.Context, id int64) error
+type StorageScheduler interface {
+	ListByNotify(ctx context.Context, until time.Duration) (storage.SliceEvents, error)
+	Clear(ctx context.Context) error
+	ConnCloser
+}
+
+type StorageCalendar interface {
+	ListUpcoming(ctx context.Context, userName string, until time.Duration) (storage.SliceEvents, error)
+	List(ctx context.Context, userName string) (storage.SliceEvents, error)
 	Update(ctx context.Context, event *storage.Event) error
 	Add(ctx context.Context, event *storage.Event) error
-	List(ctx context.Context, userName string) ([]storage.Event, error)
-	ListUpcoming(ctx context.Context, userName string, until time.Duration) ([]storage.Event, error)
-}
-
-type Storage interface {
-	BaseStorage
+	Delete(ctx context.Context, id int64) error
 	ConnCloser
-	StorageQueue
 }
 
-func New(logger Logger, storage Storage) *App {
+func New(logger Logger, storage StorageCalendar) *App {
 	return &App{
 		Logger:  logger,
 		Storage: storage,
 	}
 }
 
-func (a *App) Connect(ctx context.Context) error {
-	return a.Storage.Connect(ctx)
+func (c *App) Connect(ctx context.Context) error {
+	return c.Storage.Connect(ctx)
 }
 
-func (a *App) Close(ctx context.Context) error {
-	return a.Storage.Close(ctx)
+func (c *App) Close(ctx context.Context) error {
+	return c.Storage.Close(ctx)
 }
 
-func (a *App) Add(ctx context.Context, event *storage.Event) error {
-	return a.Storage.Add(ctx, event)
+func (c *App) Add(ctx context.Context, event *storage.Event) error {
+	return c.Storage.Add(ctx, event)
 }
 
-func (a *App) Delete(ctx context.Context, id int64) error {
-	return a.Storage.Delete(ctx, id)
+func (c *App) Delete(ctx context.Context, id int64) error {
+	return c.Storage.Delete(ctx, id)
 }
 
-func (a *App) Update(ctx context.Context, newEvent *storage.Event) error {
-	return a.Storage.Update(ctx, newEvent)
+func (c *App) Update(ctx context.Context, newEvent *storage.Event) error {
+	return c.Storage.Update(ctx, newEvent)
 }
 
-func (a *App) List(ctx context.Context, userName string) ([]storage.Event, error) {
-	return a.Storage.List(ctx, userName)
+func (c *App) List(ctx context.Context, userName string) (storage.SliceEvents, error) {
+	return c.Storage.List(ctx, userName)
 }
 
-func (a *App) ListUpcoming(ctx context.Context, userName string, until time.Duration) ([]storage.Event, error) {
-	return a.Storage.ListUpcoming(ctx, userName, until)
+func (c *App) ListUpcoming(ctx context.Context, userName string, until time.Duration) (storage.SliceEvents, error) {
+	return c.Storage.ListUpcoming(ctx, userName, until)
 }

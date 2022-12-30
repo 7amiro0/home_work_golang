@@ -3,7 +3,6 @@ version: '3.9'
 services:
   integration_tests:
     container_name: "tests"
-    restart: on-failure
     depends_on:
       - calendar
       - scheduler
@@ -12,7 +11,7 @@ services:
       context: ..
       dockerfile: ./build/Dockerfile_test
     environment:
-      - LEVEL=${LOGGER_LEVEL}
+      - LOGGER_LEVEL
       - URL
       - NAME_TEST_Q
 

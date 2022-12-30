@@ -17,25 +17,25 @@ type GRPCServer struct {
 }
 
 func NewGRPCServer(ctx context.Context, log server.Logger, app server.Application, addr string) *GRPCServer {
-	server := &GRPCServer{
+	grpcServer := &GRPCServer{
 		server:     server.New(ctx, log, app, addr),
 		grpcServer: grpc.NewServer(),
 	}
 
 	mux := grpcRun.NewServeMux()
 
-	if err := pb.RegisterStorageHandlerServer(ctx, mux, server); err != nil {
-		server.server.Logger.Fatal(err)
+	if err := pb.RegisterStorageHandlerServer(ctx, mux, grpcServer); err != nil {
+		grpcServer.server.Logger.Fatal(err)
 	}
 
-	pb.RegisterStorageServer(server.grpcServer, server)
+	pb.RegisterStorageServer(grpcServer.grpcServer, grpcServer)
 
-	server.httpServer = &http.Server{
-		Addr:    server.server.Addr,
-		Handler: server.server.Middle.LoggingMiddleware(mux, server.server.Logger),
+	grpcServer.httpServer = &http.Server{
+		Addr:    grpcServer.server.Addr,
+		Handler: grpcServer.server.Middle.LoggingMiddleware(mux, grpcServer.server.Logger),
 	}
 
-	return server
+	return grpcServer
 }
 
 func (s *GRPCServer) Start(ctx context.Context) error {

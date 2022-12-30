@@ -1,6 +1,9 @@
 package cmd
 
-import "os"
+import (
+	"os"
+	"strconv"
+)
 
 type DBConfig struct {
 	User     string `yaml:"user"`
@@ -15,5 +18,20 @@ type LoggerConfig struct {
 }
 
 func (l LoggerConfig) Set() {
-	l.Level = os.Getenv("LEVEL")
+	l.Level = os.Getenv("LOGGER_LEVEL")
+}
+
+func ParseBool(envs ...string) (result map[string]bool, err error) {
+	result = make(map[string]bool)
+	var opt bool
+	for _, env := range envs {
+		opt, err = strconv.ParseBool(env)
+		if err != nil {
+			return nil, err
+		}
+
+		result[env] = opt
+	}
+
+	return result, err
 }

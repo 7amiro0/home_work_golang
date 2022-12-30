@@ -4,7 +4,6 @@ import (
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/cmd"
 	"log"
 	"os"
-	"strconv"
 )
 
 type Config struct {
@@ -15,26 +14,10 @@ type Config struct {
 type RabbitConfig struct {
 	Url       string `yaml:"url"`
 	Name      string `yaml:"name"`
-	Exclusive bool   `yaml:"exclusive"`
-	AutoAck   bool   `yaml:"autoAck"`
-	NoLocal   bool   `yaml:"noLocal"`
 	NoWait    bool   `yaml:"noWait"`
-}
-
-func parseBool(envs ...string) (result map[string]bool, err error) {
-	var opt bool
-	result = make(map[string]bool)
-
-	for _, env := range envs {
-		opt, err = strconv.ParseBool(env)
-		if err != nil {
-			return nil, err
-		}
-
-		result[env] = opt
-	}
-
-	return result, err
+	NoLocal   bool   `yaml:"noLocal"`
+	AutoAck   bool   `yaml:"autoAck"`
+	Exclusive bool   `yaml:"exclusive"`
 }
 
 func (rc *RabbitConfig) Set() {
@@ -46,8 +29,7 @@ func (rc *RabbitConfig) Set() {
 	rc.Url = os.Getenv("URL")
 	rc.Name = os.Getenv("NAME_Q")
 
-	envs, err := parseBool(exclusive, autoAck, noLocal, noWait)
-
+	envs, err := cmd.ParseBool(exclusive, autoAck, noLocal, noWait)
 	if err != nil {
 		log.Fatal(err)
 	}

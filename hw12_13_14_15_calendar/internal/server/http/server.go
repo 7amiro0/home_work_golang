@@ -13,16 +13,16 @@ type HTTPServer struct {
 }
 
 func NewHTTPServer(ctx context.Context, log server.Logger, app server.Application, addr string) *HTTPServer {
-	server := &HTTPServer{
+	httpServer := &HTTPServer{
 		server: server.New(ctx, log, app, addr),
 	}
 
-	server.httpServer = &http.Server{
-		Addr:    server.server.Addr,
-		Handler: server.server.Middle.LoggingMiddleware(server.createRouter(), server.server.Logger),
+	httpServer.httpServer = &http.Server{
+		Addr:    httpServer.server.Addr,
+		Handler: httpServer.server.Middle.LoggingMiddleware(httpServer.createRouter(), httpServer.server.Logger),
 	}
 
-	return server
+	return httpServer
 }
 
 func (s *HTTPServer) Start(ctx context.Context) error {

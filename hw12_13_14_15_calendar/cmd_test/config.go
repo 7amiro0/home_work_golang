@@ -15,5 +15,5 @@ type LoggerConfig struct {
 }
 
 func (l LoggerConfig) Set() {
-	l.Level = os.Getenv("LEVEL")
+	l.Level = os.Getenv("LOGGER_LEVEL")
 }

@@ -24,9 +24,6 @@ services:
       - HTTP_HOST
       - HTTP_PORT
 
-      # storage
-      - STORAGE=${TYPE_STORAGE}
-
       # sql
       - USER=${DB_USER}
       - PASSWORD=${DB_PASSWORD}
@@ -45,9 +42,9 @@ services:
       - migrate
     environment:
       # logger
-      - LEVEL=${LOGGER_LEVEL}
+      - LOGGER_LEVEL
 
-      #ticker
+      #tickers
       - ADD
       - CLEAR
 
@@ -69,7 +66,6 @@ services:
       - HOST=${DB_HOST}
       - PORT=${DB_PORT}
 
-
   sender:
     container_name: "sender"
     restart: on-failure
@@ -79,6 +75,10 @@ services:
     depends_on:
       - rabbit
     environment:
+      # logger
+      - LOGGER_LEVEL
+
+      # rabbit
       - URL
       - NAME_Q
       - AUTO_ACK

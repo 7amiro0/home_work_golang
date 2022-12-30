@@ -6,7 +6,6 @@ import (
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/server"
 	"github.com/7amiro0/home_work_golang/hw12_13_14_15_calendar/internal/storage"
 	"net/http"
-	"sort"
 	"strconv"
 	"time"
 )
@@ -55,21 +54,21 @@ func (s *HTTPServer) add(w http.ResponseWriter, r *http.Request) {
 
 	notify, err := strconv.ParseInt(eventS.notify, 10, 32)
 	if err != nil {
-		s.server.Logger.Error("[ERR] Cannot parsing notify: ", err)
+		s.server.Logger.Error("[ERR] Cannot parse notify: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	start, err := time.ParseInLocation(time.RFC3339Nano, eventS.start, time.UTC)
+	start, err := time.Parse(time.RFC3339Nano, eventS.start)
 	if err != nil {
-		s.server.Logger.Error("[ERR] Cannot parsing start: ", err)
+		s.server.Logger.Error("[ERR] Cannot parse start: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	end, err := time.ParseInLocation(time.RFC3339Nano, eventS.end, time.UTC)
+	end, err := time.Parse(time.RFC3339Nano, eventS.end)
 	if err != nil {
-		s.server.Logger.Error("[ERR] Cannot parsing end: ", err)
+		s.server.Logger.Error("[ERR] Cannot parse end: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -84,8 +83,8 @@ func (s *HTTPServer) add(w http.ResponseWriter, r *http.Request) {
 		User:        storage.User{Name: eventS.userName},
 		Description: eventS.description,
 		Notify:      int32(notify),
-		End:         end,
-		Start:       start,
+		End:         end.UTC(),
+		Start:       start.UTC(),
 	}
 
 	if err = s.server.App.Add(s.server.Ctx, &event); err != nil {
@@ -98,16 +97,14 @@ func (s *HTTPServer) delete(w http.ResponseWriter, r *http.Request) {
 	eventS := newEventString(r)
 	id, err := strconv.ParseInt(eventS.id, 10, 64)
 	if err != nil {
-		s.server.Logger.Error("[ERR] Cannot parsing id: ", err)
+		s.server.Logger.Error("[ERR] Cannot parse id: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if err = s.server.App.Delete(s.server.Ctx, id); err != nil {
 		s.server.Logger.Error("[ERR] Cannot delete event: ", err)
-		w.WriteHeader(http.StatusBadRequest)
-	} else {
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
 
@@ -115,28 +112,28 @@ func (s *HTTPServer) update(w http.ResponseWriter, r *http.Request) {
 	eventS := newEventString(r)
 	id, err := strconv.ParseInt(eventS.id, 10, 64)
 	if err != nil {
-		s.server.Logger.Error("[ERR] Cannot parsing id: ", err)
+		s.server.Logger.Error("[ERR] Cannot parse id: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	notify, err := strconv.ParseInt(eventS.notify, 10, 32)
 	if err != nil {
-		s.server.Logger.Error("[ERR] Cannot parsing notify: ", err)
+		s.server.Logger.Error("[ERR] Cannot parse notify: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	start, err := time.ParseInLocation(time.RFC3339Nano, eventS.start, time.UTC)
+	start, err := time.Parse(time.RFC3339Nano, eventS.start)
 	if err != nil {
-		s.server.Logger.Error("[ERR] Cannot parsing start: ", err)
+		s.server.Logger.Error("[ERR] Cannot parse start: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	end, err := time.ParseInLocation(time.RFC3339Nano, eventS.end, time.UTC)
+	end, err := time.Parse(time.RFC3339Nano, eventS.end)
 	if err != nil {
-		s.server.Logger.Error("[ERR] Cannot parsing end: ", err)
+		s.server.Logger.Error("[ERR] Cannot parse end: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -151,8 +148,8 @@ func (s *HTTPServer) update(w http.ResponseWriter, r *http.Request) {
 		Title:       eventS.title,
 		Description: eventS.description,
 		Notify:      int32(notify),
-		End:         end,
-		Start:       start,
+		End:         end.UTC(),
+		Start:       start.UTC(),
 	}
 
 	if err = s.server.App.Update(s.server.Ctx, &event); err != nil {
@@ -167,7 +164,7 @@ func (s *HTTPServer) listUpcoming(w http.ResponseWriter, r *http.Request) {
 
 	untilUint, err := strconv.ParseUint(eventS.until, 10, 64)
 	if err != nil {
-		s.server.Logger.Error("[ERR] Cannot convert until to uint: ", err)
+		s.server.Logger.Error("[ERR] Cannot parse until: ", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -188,11 +185,7 @@ func (s *HTTPServer) listUpcoming(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sort.Slice(res, func(i, j int) bool {
-		return res[i].ID < res[j].ID
-	})
-
-	str, err := json.Marshal(storage.SliceEvents{Events: res})
+	str, err := json.Marshal(res)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -213,11 +206,7 @@ func (s *HTTPServer) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sort.Slice(res, func(i, j int) bool {
-		return res[i].ID < res[j].ID
-	})
-
-	str, err := json.Marshal(storage.SliceEvents{Events: res})
+	str, err := json.Marshal(res)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}

@@ -26,7 +26,7 @@ func AddEvent(t *testing.T, server, addCommand string, event storage.Event) {
 	require.Equalf(t, 200, resp.StatusCode, "expected 200 but status code %v", resp.StatusCode)
 }
 
-func ListAll[T storage.SliceEvents | SliceStringEvents](t *testing.T, server, listCommand, userName string) T {
+func ListAll[T storage.SliceEvents | SliceEvents](t *testing.T, server, listCommand, userName string) T {
 	resp, err := http.Get(server + fmt.Sprintf(listCommand, userName))
 	require.NoErrorf(t, err, "expected nil but get %q", err)
 	defer resp.Body.Close()
@@ -42,7 +42,7 @@ func ListAll[T storage.SliceEvents | SliceStringEvents](t *testing.T, server, li
 	return realEvent
 }
 
-func ListByTime[T storage.SliceEvents | SliceStringEvents](t *testing.T, server, listCommand, userName string, per uint64) T {
+func ListByTime[T storage.SliceEvents | SliceEvents](t *testing.T, server, listCommand, userName string, per uint64) T {
 	resp, err := http.Get(server + fmt.Sprintf(listCommand, userName, per))
 	require.NoErrorf(t, err, "expected nil but get %q", err)
 	defer resp.Body.Close()

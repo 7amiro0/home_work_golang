@@ -18,8 +18,7 @@ type Scheduler struct {
 }
 
 type Storage interface {
-	app.StorageQueue
-	app.ConnCloser
+	app.StorageScheduler
 }
 
 type Logger interface {
@@ -53,7 +52,7 @@ func (s *Scheduler) AddInQueue(msg []byte, exchange string, mandatory, immediate
 	return err
 }
 
-func (s *Scheduler) List(duration time.Duration) ([]storage.Event, error) {
+func (s *Scheduler) List(duration time.Duration) (storage.SliceEvents, error) {
 	return s.storage.ListByNotify(s.ctx, duration)
 }
 
